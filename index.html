@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Tay Từ Vựng Tiếng Anh 10 - Gia Sư AI</title>
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cài đặt font Be Vietnam Pro -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Load Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Font và màu sắc cơ bản */
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        /* Style cho nút Unit đang hoạt động */
+        .unit-button.active {
+            background-color: #5686F7; /* Blue-600 */
+            color: #FFFFFF;
+            font-weight: 700;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .unit-button:hover:not(.active) {
+            background-color: #EBF4FF; /* Blue-50 */
+            transform: translateY(-1px);
+        }
+        .voca-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .voca-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Style cho thanh loading (màu gradient xanh) */
+        #loading-overlay {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(2px);
+            z-index: 50;
+        }
+        #loading-spinner {
+            border-top-color: #5686F7;
+            border-left-color: #5686F7;
+        }
+        /* Ẩn thanh cuộn cho input/textarea */
+        textarea::-webkit-scrollbar {
+            display: none;
+        }
+        textarea {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+    <!-- Khởi tạo Firebase SDKs (Cần thiết cho Firestore và Auth) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Thiết lập cấu hình và biến toàn cục
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+        
+        // BẬT LOG DEBUG CHO FIREBASE
+        // setLogLevel('debug'); 
+
+        // Hàm khởi tạo Firebase và xác thực người dùng
+        async function initializeFirebase() {
+            try {
+                if (Object.keys(firebaseConfig).length > 0) {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Xử lý xác thực người dùng
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            console.log("Firebase Auth State Changed: Logged in. UID:", userId);
+                        } else {
+                            // Cố gắng đăng nhập ẩn danh nếu chưa có token tùy chỉnh
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                            // Sau khi đăng nhập, onAuthStateChanged sẽ được gọi lại với user mới.
+                        }
+                        // Đánh dấu Auth đã sẵn sàng sau lần kiểm tra đầu tiên hoặc sau khi đăng nhập
+                        isAuthReady = true;
+                        if (user) {
+                             userId = user.uid; // Cập nhật lại userId sau khi đăng nhập (nếu cần)
+                        } else if (!userId) {
+                            // Tạo ID tạm thời nếu đăng nhập ẩn danh thất bại hoặc không có
+                            userId = crypto.randomUUID(); 
+                            console.log("Using temporary UUID:", userId);
+                        }
+                        
+                        // Sau khi có userId, có thể hiển thị nó và bắt đầu các tác vụ Firestore
+                        updateUserIdDisplay();
+                        
+                        // Chạy hàm hiển thị Unit sau khi auth sẵn sàng
+                        window.renderUnitButtons();
+                        window.loadInitialVocabulary();
+                    });
+                } else {
+                    console.error("Firebase config is missing. Firestore features will be disabled.");
+                    isAuthReady = true;
+                    userId = crypto.randomUUID(); 
+                    updateUserIdDisplay();
+                    window.renderUnitButtons();
+                    window.loadInitialVocabulary();
+                }
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                // Đảm bảo app vẫn hoạt động ngay cả khi Firebase lỗi
+                isAuthReady = true;
+                userId = crypto.randomUUID();
+                updateUserIdDisplay();
+                window.renderUnitButtons();
+                window.loadInitialVocabulary();
+            }
+        }
+        
+        function updateUserIdDisplay() {
+            const displayElement = document.getElementById('user-id-display');
+            if (displayElement) {
+                displayElement.textContent = `ID người dùng: ${userId || 'Đang tải...'}`;
+            }
+        }
+
+        // Tạo hàm lưu/tải dữ liệu Firebase
+        // NOTE: Trong ứng dụng này, chúng ta sẽ không sử dụng Firestore để đơn giản, 
+        // mà chỉ sử dụng hàm getVocabularyData() tĩnh.
+
+        // Khởi chạy Firebase khi tài liệu tải xong
+        window.addEventListener('load', initializeFirebase);
+        
+        // Export variables/functions cho các script khác sử dụng (nếu cần)
+        window.firebaseData = {
+            getDb: () => db,
+            getAuth: () => auth,
+            getUserId: () => userId,
+            isAuthReady: () => isAuthReady,
+            appId: appId
+        };
+
+    </script>
+</head>
+<body class="min-h-screen">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 flex items-center justify-center hidden">
+        <div id="loading-spinner" class="w-12 h-12 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight mb-2">
+                <i class="fas fa-book-open text-amber-500 mr-3"></i> Sổ Tay Từ Vựng Tiếng Anh 10
+            </h1>
+            <p class="text-xl text-gray-600 font-medium">Kết nối Tri Thức và Cuộc Sống</p>
+            <p id="user-id-display" class="text-xs text-gray-400 mt-1"></p>
+        </header>
+
+        <!-- Container cho các nút Unit -->
+        <div id="unit-buttons-container" class="flex flex-wrap justify-center gap-3 p-4 bg-white rounded-xl shadow-lg mb-8 sticky top-0 z-10 border-b border-gray-200">
+            <!-- Nút Unit sẽ được chèn ở đây bằng JavaScript -->
+        </div>
+
+        <!-- Thanh tìm kiếm và bộ lọc (Placeholder) -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <input type="text" id="search-input" placeholder="Tìm kiếm từ vựng (tiếng Anh hoặc tiếng Việt)..."
+                   class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                   onkeyup="searchVocabulary()">
+            <!-- Nút chức năng (Placeholder) -->
+            <!-- <button class="bg-indigo-500 text-white p-3 rounded-lg shadow-md hover:bg-indigo-600 transition duration-150">Bộ Lọc</button> -->
+        </div>
+
+        <!-- Khu vực hiển thị Từ vựng -->
+        <main id="vocabulary-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Thẻ từ vựng sẽ được chèn ở đây bằng JavaScript -->
+        </main>
+
+        <!-- Quiz Section -->
+        <section class="mt-12 p-6 bg-white rounded-xl shadow-2xl border border-blue-100">
+            <h2 class="text-3xl font-bold text-center text-blue-600 mb-6">
+                <i class="fas fa-spell-check mr-2"></i> Bài Kiểm Tra Từ Vựng
+            </h2>
+            <div id="quiz-intro" class="text-center mb-6">
+                <p class="text-lg text-gray-600 mb-4">Luyện tập viết 10 từ ngẫu nhiên từ Unit đang chọn.</p>
+                <button onclick="startQuiz()"
+                        class="bg-green-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-green-600 transition duration-300 transform hover:scale-105">
+                    <i class="fas fa-play mr-2"></i> Bắt Đầu Quiz
+                </button>
+            </div>
+
+            <form id="quiz-form" class="space-y-4 hidden" onsubmit="submitQuiz(event)">
+                <!-- Câu hỏi sẽ được chèn vào đây -->
+            </form>
+
+            <div id="quiz-result" class="mt-8 p-4 bg-gray-50 rounded-lg shadow-inner hidden">
+                <!-- Kết quả Quiz sẽ được hiển thị ở đây -->
+            </div>
+            
+            <button id="restart-quiz-btn" onclick="startQuiz()"
+                    class="mt-4 w-full bg-blue-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-blue-600 transition duration-300 transform hover:scale-105 hidden">
+                <i class="fas fa-redo mr-2"></i> Làm lại Quiz
+            </button>
+        </section>
+
+
+        <!-- Chatbot Floating Button -->
+        <button id="ai-chat-toggle" class="fixed bottom-6 right-6 bg-red-500 text-white p-4 rounded-full shadow-xl hover:bg-red-600 transition duration-300 transform hover:scale-105 z-20">
+            <i class="fas fa-robot text-2xl"></i>
+        </button>
+
+        <!-- AI Chat Container (Simple Implementation Placeholder) -->
+        <div id="ai-chat-container" class="fixed bottom-20 right-6 w-80 h-[450px] bg-white rounded-xl shadow-2xl flex flex-col hidden z-20 border border-gray-200">
+            <div class="p-4 bg-red-500 text-white rounded-t-xl flex justify-between items-center">
+                <h3 class="font-bold text-lg">Gia Sư AI</h3>
+                <button id="close-chat-btn" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="chat-messages" class="flex-grow p-3 overflow-y-auto space-y-3">
+                <div class="flex justify-start">
+                    <div class="bg-gray-200 text-gray-800 p-3 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
+                        Chào bạn! Hãy hỏi mình bất cứ điều gì về từ vựng, ngữ pháp hoặc bài tập Tiếng Anh 10 nhé!
+                    </div>
+                </div>
+                <!-- Tin nhắn mới sẽ được thêm vào đây -->
+            </div>
+            <form id="chat-form" class="p-3 border-t border-gray-200 flex flex-col space-y-2">
+                <div id="image-preview-container" class="relative hidden mb-2 p-2 border border-dashed rounded-lg">
+                    <img id="image-preview" class="max-h-24 w-auto rounded-md object-contain mx-auto" alt="Preview">
+                    <button type="button" id="remove-image-btn" class="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full text-xs hover:bg-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <textarea id="prompt-input" rows="1" placeholder="Nhập câu hỏi của bạn..."
+                          class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          oninput="autoExpand(this)"></textarea>
+                <div class="flex justify-between items-center">
+                    <label for="image-input" class="cursor-pointer text-gray-500 hover:text-blue-500 transition duration-150">
+                        <i class="fas fa-image text-xl"></i>
+                    </label>
+                    <input type="file" id="image-input" accept="image/*" class="hidden">
+                    <button type="submit" id="send-btn"
+                            class="bg-red-500 text-white p-2 rounded-lg shadow-md hover:bg-red-600 transition duration-150 flex items-center justify-center">
+                        <i class="fas fa-paper-plane mr-1"></i> Gửi
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        
+        // Lấy các hàm Firebase đã được export
+        const { getDb, getUserId, isAuthReady, appId } = window.firebaseData || {};
+        
+        // --- DATA ---
+        
+        // HÀM CHỨA DỮ LIỆU TỪ VỰNG TỪ UNIT 1 ĐẾN 10
+        function getVocabularyData() {
+            // Dữ liệu từ vựng được cập nhật dựa trên nội dung sách Tiếng Anh 10 - Kết Nối Tri Thức
+            return {
+                "Unit 1": [
+                    { word: "hobby", pronunciation: "/ˈhɒbi/", type: "n", meaning: "Sở thích" },
+                    { word: "collection", pronunciation: "/kəˈlekʃən/", type: "n", meaning: "Bộ sưu tập" },
+                    { word: "collector", pronunciation: "/kəˈlektə(r)/", type: "n", meaning: "Người sưu tầm" },
+                    { word: "origami", pronunciation: "/ˌɒrɪˈɡɑːmi/", type: "n", meaning: "Nghệ thuật gấp giấy" },
+                    { word: "creative", pronunciation: "/kriˈeɪtɪv/", type: "adj", meaning: "Sáng tạo" },
+                    { word: "fascinating", pronunciation: "/ˈfæsɪneɪtɪŋ/", type: "adj", meaning: "Hấp dẫn, lôi cuốn" },
+                    { word: "satisfaction", pronunciation: "/ˌsætɪsˈfækʃən/", type: "n", meaning: "Sự thỏa mãn" },
+                    { word: "arrange", pronunciation: "/əˈreɪndʒ/", type: "v", meaning: "Sắp xếp, bố trí" },
+                    { word: "relaxing", pronunciation: "/rɪˈlæksɪŋ/", type: "adj", meaning: "Thư giãn" },
+                    { word: "socializing", pronunciation: "/ˈsəʊʃəlaɪzɪŋ/", type: "n", meaning: "Hoạt động xã hội, giao lưu" },
+                    { word: "unique", pronunciation: "/juːˈniːk/", type: "adj", meaning: "Độc nhất, độc đáo" },
+                    { word: "sewing", pronunciation: "/ˈsəʊɪŋ/", type: "n", meaning: "Công việc may vá" },
+                    { word: "cycling", pronunciation: "/ˈsaɪklɪŋ/", type: "n", meaning: "Đi xe đạp" },
+                    { word: "gardening", pronunciation: "/ˈɡɑːdnɪŋ/", type: "n", meaning: "Làm vườn" }
+                ],
+                "Unit 2": [
+                    { word: "Ecotourism", pronunciation: "/ˌiːkəʊˈtʊərɪzəm/", type: "n", meaning: "Du lịch sinh thái" },
+                    { word: "sustainable", pronunciation: "/səˈsteɪnəbl/", type: "adj", meaning: "Bền vững" },
+                    { word: "impact", pronunciation: "/ˈɪmpækt/", type: "n", meaning: "Tác động, ảnh hưởng" },
+                    { word: "reserve", pronunciation: "/rɪˈzɜːv/", type: "n", meaning: "Khu bảo tồn" },
+                    { word: "scenic", pronunciation: "/ˈsiːnɪk/", type: "adj", meaning: "Có cảnh đẹp" },
+                    { word: "biodiversity", pronunciation: "/ˌbaɪəʊdaɪˈvɜːsəti/", type: "n", meaning: "Đa dạng sinh học" },
+                    { word: "habitat", pronunciation: "/ˈhæbɪtæt/", type: "n", meaning: "Môi trường sống" },
+                    { word: "emission", pronunciation: "/ɪˈmɪʃən/", type: "n", meaning: "Sự phát thải" },
+                    { word: "preservation", pronunciation: "/ˌprezəˈveɪʃən/", type: "n", meaning: "Sự bảo tồn" },
+                    { word: "responsible", pronunciation: "/rɪˈspɒnsəbl/", type: "adj", meaning: "Có trách nhiệm" },
+                    { word: "spectacular", pronunciation: "/spekˈtækjələ(r)/", type: "adj", meaning: "Ngoạn mục, hùng vĩ" },
+                    { word: "coral reef", pronunciation: "/ˈkɒrəl riːf/", type: "n", meaning: "Rạn san hô" },
+                    { word: "local community", pronunciation: "/ˈləʊkl kəˈmjuːnəti/", type: "n", meaning: "Cộng đồng địa phương" }
+                ],
+                "Unit 3": [
+                    { word: "future job", pronunciation: "/ˈfjuːtʃə dʒɒb/", type: "n", meaning: "Công việc trong tương lai" },
+                    { word: "career path", pronunciation: "/kəˈrɪə pɑːθ/", type: "n", meaning: "Con đường sự nghiệp" },
+                    { word: "qualifications", pronunciation: "/ˌkwɒlɪfɪˈkeɪʃənz/", type: "n", meaning: "Bằng cấp, phẩm chất" },
+                    { word: "skill", pronunciation: "/skɪl/", type: "n", meaning: "Kỹ năng" },
+                    { word: "robotics", pronunciation: "/rəʊˈbɒtɪks/", type: "n", meaning: "Ngành rô-bốt học" },
+                    { word: "artificial intelligence (AI)", pronunciation: "/ˌɑːtɪˌfɪʃl ɪnˈtelɪdʒəns/", type: "n", meaning: "Trí tuệ nhân tạo" },
+                    { word: "programmer", pronunciation: "/ˈprəʊɡræmə(r)/", type: "n", meaning: "Lập trình viên" },
+                    { word: "digital nomad", pronunciation: "/ˈdɪdʒɪtl ˈnəʊmæd/", type: "n", meaning: "Người làm việc di động" },
+                    { word: "flexible", pronunciation: "/ˈfleksəbl/", type: "adj", meaning: "Linh hoạt" },
+                    { word: "adaptable", pronunciation: "/əˈdæptəbl/", type: "adj", meaning: "Có khả năng thích nghi" },
+                    { word: "self-study", pronunciation: "/ˌself ˈstʌdi/", type: "n", meaning: "Tự học" },
+                    { word: "interpersonal skill", pronunciation: "/ˌɪntəˈpɜːsənl skɪl/", type: "n", meaning: "Kỹ năng giao tiếp" }
+                ],
+                "Unit 4": [
+                    { word: "great musician", pronunciation: "/ɡreɪt mjuːˈzɪʃən/", type: "n", meaning: "Nhạc sĩ vĩ đại" },
+                    { word: "composer", pronunciation: "/kəmˈpəʊzə(r)/", type: "n", meaning: "Nhà soạn nhạc" },
+                    { word: "performance", pronunciation: "/pəˈfɔːməns/", type: "n", meaning: "Buổi biểu diễn" },
+                    { word: "instrument", pronunciation: "/ˈɪnstrəmənt/", type: "n", meaning: "Nhạc cụ" },
+                    { word: "rhythm", pronunciation: "/ˈrɪðəm/", type: "n", meaning: "Nhịp điệu" },
+                    { word: "melody", pronunciation: "/ˈmelədi/", type: "n", meaning: "Giai điệu" },
+                    { word: "opera", pronunciation: "/ˈɒprə/", type: "n", meaning: "Nhạc kịch, Opera" },
+                    { word: "folk music", pronunciation: "/fəʊk ˈmjuːzɪk/", type: "n", meaning: "Nhạc dân gian" },
+                    { word: "genre", pronunciation: "/ˈʒɒnrə/", type: "n", meaning: "Thể loại" },
+                    { word: "talented", pronunciation: "/ˈtæləntɪd/", type: "adj", meaning: "Tài năng" },
+                    { word: "contemporary", pronunciation: "/kənˈtempərəri/", type: "adj", meaning: "Đương đại" },
+                    { word: "audience", pronunciation: "/ˈɔːdiəns/", type: "n", meaning: "Khán giả" },
+                    { word: "lyrics", pronunciation: "/ˈlɪrɪks/", type: "n", meaning: "Lời bài hát" }
+                ],
+                "Unit 5": [
+                    { word: "food and drink", pronunciation: "/fuːd ənd drɪŋk/", type: "n", meaning: "Đồ ăn và thức uống" },
+                    { word: "cuisine", pronunciation: "/kwɪˈziːn/", type: "n", meaning: "Ẩm thực" },
+                    { word: "ingredient", pronunciation: "/ɪnˈɡriːdiənt/", type: "n", meaning: "Thành phần" },
+                    { word: "recipe", pronunciation: "/ˈresəpi/", type: "n", meaning: "Công thức nấu ăn" },
+                    { word: "nutritious", pronunciation: "/njuːˈtrɪʃəs/", type: "adj", meaning: "Bổ dưỡng" },
+                    { word: "flavour", pronunciation: "/ˈfleɪvə(r)/", type: "n", meaning: "Hương vị" },
+                    { word: "spicy", pronunciation: "/ˈspaɪsi/", type: "adj", meaning: "Cay" },
+                    { word: "sour", pronunciation: "/ˈsaʊə(r)/", type: "adj", meaning: "Chua" },
+                    { word: "bitter", pronunciation: "/ˈbɪtə(r)/", type: "adj", meaning: "Đắng" },
+                    { word: "delicacy", pronunciation: "/ˈdelɪkəsi/", type: "n", meaning: "Món ngon, đặc sản" },
+                    { word: "vegetarian", pronunciation: "/ˌvedʒəˈteəriən/", type: "n/adj", meaning: "Người ăn chay/thuộc về ăn chay" },
+                    { word: "gourmet", pronunciation: "/ˈɡʊəmeɪ/", type: "adj/n", meaning: "Sành ăn/người sành ăn" },
+                    { word: "staple food", pronunciation: "/ˈsteɪpl fuːd/", type: "n", meaning: "Thực phẩm chính" }
+                ],
+                "Unit 6": [
+                    { word: "Viet Nam: then and now", pronunciation: "/ˌvjetˈnæm ðen ənd naʊ/", type: "n", meaning: "Việt Nam: xưa và nay" },
+                    { word: "historical event", pronunciation: "/hɪˈstɒrɪkl ɪˈvent/", type: "n", meaning: "Sự kiện lịch sử" },
+                    { word: "tradition", pronunciation: "/trəˈdɪʃən/", type: "n", meaning: "Truyền thống" },
+                    { word: "custom", pronunciation: "/ˈkʌstəm/", type: "n", meaning: "Phong tục" },
+                    { word: "preserve", pronunciation: "/prɪˈzɜːv/", type: "v", meaning: "Bảo tồn" },
+                    { word: "heritage", pronunciation: "/ˈherɪtɪdʒ/", type: "n", meaning: "Di sản" },
+                    { word: "lifestyle", pronunciation: "/ˈlaɪfstaɪl/", type: "n", meaning: "Lối sống" },
+                    { word: "modernization", pronunciation: "/ˌmɒdərnaɪˈzeɪʃən/", type: "n", meaning: "Sự hiện đại hóa" },
+                    { word: "economic growth", pronunciation: "/ˌiːkəˈnɒmɪk ɡrəʊθ/", type: "n", meaning: "Tăng trưởng kinh tế" },
+                    { word: "urban area", pronunciation: "/ˈɜːbən ˈeəriə/", type: "n", meaning: "Khu vực đô thị" },
+                    { word: "rural area", pronunciation: "/ˈrʊərəl ˈeəriə/", type: "n", meaning: "Khu vực nông thôn" },
+                    { word: "ancestor worship", pronunciation: "/ˈænsestə ˈwɜːʃɪp/", type: "n", meaning: "Thờ cúng tổ tiên" }
+                ],
+                "Unit 7": [
+                    { word: "cultural diversity", pronunciation: "/ˌkʌltʃərəl daɪˈvɜːsəti/", type: "n", meaning: "Đa dạng văn hóa" },
+                    { word: "ethnic group", pronunciation: "/ˈeθnɪk ɡruːp/", type: "n", meaning: "Nhóm dân tộc" },
+                    { word: "minority", pronunciation: "/maɪˈnɒrəti/", type: "n", meaning: "Dân tộc thiểu số" },
+                    { word: "costume", pronunciation: "/ˈkɒstjuːm/", type: "n", meaning: "Trang phục truyền thống" },
+                    { word: "ritual", pronunciation: "/ˈrɪtʃuəl/", type: "n", meaning: "Nghi lễ" },
+                    { word: "festival", pronunciation: "/ˈfestɪvl/", type: "n", meaning: "Lễ hội" },
+                    { word: "communal house", pronunciation: "/kəˈmjuːnl haʊs/", type: "n", meaning: "Nhà rông, nhà cộng đồng" },
+                    { word: "spiritual life", pronunciation: "/ˈspɪrɪtʃuəl laɪf/", type: "n", meaning: "Đời sống tinh thần" },
+                    { word: "customs and habits", pronunciation: "/ˈkʌstəmz ənd ˈhæbɪts/", type: "n", meaning: "Phong tục và thói quen" },
+                    { word: "unity", pronunciation: "/ˈjuːnəti/", type: "n", meaning: "Sự đoàn kết" },
+                    { word: "harmony", pronunciation: "/ˈhɑːməni/", type: "n", meaning: "Sự hòa hợp" },
+                    { word: "belief", pronunciation: "/bɪˈliːf/", type: "n", meaning: "Niềm tin" }
+                ],
+                "Unit 8": [
+                    { word: "Phụ huynh", pronunciation: "/ˈpeərənt/", type: "n", meaning: "Phụ huynh" },
+                    { word: "parenting", pronunciation: "/ˈpeərəntɪŋ/", type: "n", meaning: "Việc nuôi dạy con cái" },
+                    { word: "generation gap", pronunciation: "/ˌdʒenəˈreɪʃən ɡæp/", type: "n", meaning: "Khoảng cách thế hệ" },
+                    { word: "conflict", pronunciation: "/ˈkɒnflɪkt/", type: "n", meaning: "Xung đột" },
+                    { word: "communicate", pronunciation: "/kəˈmjuːnɪkeɪt/", type: "v", meaning: "Giao tiếp" },
+                    { word: "respect", pronunciation: "/rɪˈspekt/", type: "v/n", meaning: "Tôn trọng/Sự tôn trọng" },
+                    { word: "independent", pronunciation: "/ˌɪndɪˈpendənt/", type: "adj", meaning: "Độc lập" },
+                    { word: "responsible", pronunciation: "/rɪˈspɒnsəbl/", type: "adj", meaning: "Có trách nhiệm" },
+                    { word: "solution", pronunciation: "/səˈluːʃən/", type: "n", meaning: "Giải pháp" },
+                    { word: "attitude", pronunciation: "/ˈætɪtjuːd/", type: "n", meaning: "Thái độ" },
+                    { word: "pressure", pronunciation: "/ˈpreʃə(r)/", type: "n", meaning: "Áp lực" },
+                    { word: "emotional", pronunciation: "/ɪˈməʊʃənəl/", type: "adj", meaning: "Thuộc về cảm xúc" },
+                    { word: "curfew", pronunciation: "/ˈkɜːfjuː/", type: "n", meaning: "Giờ giới nghiêm" }
+                ],
+                "Unit 9": [
+                    { word: "natural disaster", pronunciation: "/ˌnætʃrəl dɪˈzɑːstə(r)/", type: "n", meaning: "Thiên tai" },
+                    { word: "earthquake", pronunciation: "/ˈɜːθkweɪk/", type: "n", meaning: "Động đất" },
+                    { word: "tsunami", pronunciation: "/tsuːˈnɑːmi/", type: "n", meaning: "Sóng thần" },
+                    { word: "volcano", pronunciation: "/vɒlˈkeɪnəʊ/", type: "n", meaning: "Núi lửa" },
+                    { word: "drought", pronunciation: "/draʊt/", type: "n", meaning: "Hạn hán" },
+                    { word: "flood", pronunciation: "/flʌd/", type: "n", meaning: "Lũ lụt" },
+                    { word: "typhoon", pronunciation: "/taɪˈfuːn/", type: "n", meaning: "Bão nhiệt đới, bão lớn" },
+                    { word: "eruption", pronunciation: "/ɪˈrʌpʃən/", type: "n", meaning: "Sự phun trào" },
+                    { word: "evacuation", pronunciation: "/ɪˌvækjuˈeɪʃən/", type: "n", meaning: "Sự sơ tán" },
+                    { word: "predict", pronunciation: "/prɪˈdɪkt/", type: "v", meaning: "Dự đoán" },
+                    { word: "emergency", pronunciation: "/ɪˈmɜːdʒənsi/", type: "n", meaning: "Tình trạng khẩn cấp" },
+                    { word: "aid", pronunciation: "/eɪd/", type: "n", meaning: "Viện trợ" },
+                    { word: "rescue worker", pronunciation: "/ˈreskjuː ˈwɜːkə(r)/", type: "n", meaning: "Nhân viên cứu hộ" }
+                ],
+                "Unit 10": [
+                    { word: "source of energy", pronunciation: "/sɔːs əv ˈenədʒi/", type: "n", meaning: "Nguồn năng lượng" },
+                    { word: "renewable", pronunciation: "/rɪˈnjuːəbl/", type: "adj", meaning: "Tái tạo được" },
+                    { word: "non-renewable", pronunciation: "/ˌnɒnrɪˈnjuːəbl/", type: "adj", meaning: "Không tái tạo được" },
+                    { word: "solar energy", pronunciation: "/ˌsəʊlər ˈenədʒi/", type: "n", meaning: "Năng lượng mặt trời" },
+                    { word: "wind power", pronunciation: "/wɪnd ˈpaʊə(r)/", type: "n", meaning: "Năng lượng gió" },
+                    { word: "hydro power", pronunciation: "/ˈhaɪdrəʊ ˈpaʊə(r)/", type: "n", meaning: "Thủy điện" },
+                    { word: "fossil fuel", pronunciation: "/ˈfɒsl fjuːəl/", type: "n", meaning: "Nhiên liệu hóa thạch" },
+                    { word: "geothermal", pronunciation: "/ˌdʒiːəʊˈθɜːml/", type: "adj", meaning: "Thuộc về địa nhiệt" },
+                    { word: "efficient", pronunciation: "/ɪˈfɪʃnt/", type: "adj", meaning: "Hiệu quả" },
+                    { word: "pollution", pronunciation: "/pəˈluːʃən/", type: "n", meaning: "Ô nhiễm" },
+                    { word: "conservation", pronunciation: "/ˌkɒnsəˈveɪʃən/", type: "n", meaning: "Sự bảo tồn, sự tiết kiệm" },
+                    { word: "nuclear energy", pronunciation: "/ˌnjuːkliər ˈenədʒi/", type: "n", meaning: "Năng lượng hạt nhân" },
+                    { word: "alternative", pronunciation: "/ɔːlˈtɜːnətɪv/", type: "adj/n", meaning: "Thay thế/sự thay thế" }
+                ]
+                // Các Unit tiếp theo (11 & 12) có thể được thêm vào sau.
+            };
+        }
+        
+        let currentUnit = "Unit 1";
+        let quizQuestions = [];
+        const MAX_QUIZ_QUESTIONS = 10;
+        
+        // --- DOM MANIPULATION & RENDERING ---
+
+        const vocabularyList = document.getElementById('vocabulary-list');
+        const unitButtonsContainer = document.getElementById('unit-buttons-container');
+        const quizForm = document.getElementById('quiz-form');
+        const resultDiv = document.getElementById('quiz-result');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const restartButton = document.getElementById('restart-quiz-btn');
+        const quizIntro = document.getElementById('quiz-intro');
+
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        // Render Unit Buttons
+        window.renderUnitButtons = function() {
+            const data = getVocabularyData();
+            const units = Object.keys(data);
+            unitButtonsContainer.innerHTML = ''; // Xóa các nút cũ
+
+            units.forEach(unit => {
+                const button = document.createElement('button');
+                button.textContent = unit;
+                button.classList.add('unit-button', 'px-5', 'py-2', 'rounded-full', 'font-medium', 'text-sm', 'md:text-base', 
+                                    'text-gray-700', 'bg-gray-100', 'hover:bg-blue-50', 'transition', 'duration-150', 'shadow-md');
+                
+                if (unit === currentUnit) {
+                    button.classList.add('active');
+                }
+
+                button.onclick = () => {
+                    selectUnit(unit);
+                };
+                unitButtonsContainer.appendChild(button);
+            });
+        }
+
+        // Select Unit Handler
+        function selectUnit(unit) {
+            currentUnit = unit;
+            
+            // Cập nhật trạng thái Active cho nút
+            document.querySelectorAll('.unit-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === unit) {
+                    btn.classList.add('active');
+                }
+            });
+
+            renderVocabulary(getVocabularyData()[currentUnit]);
+            
+            // Reset Quiz UI
+            quizForm.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+            quizIntro.classList.remove('hidden');
+            restartButton.classList.add('hidden');
+            document.getElementById('search-input').value = ''; // Xóa ô tìm kiếm
+        }
+
+        // Render Vocabulary List
+        function renderVocabulary(vocabulary) {
+            vocabularyList.innerHTML = '';
+            if (!vocabulary || vocabulary.length === 0) {
+                vocabularyList.innerHTML = '<p class="col-span-full text-center text-lg text-gray-500 p-8">Không có từ vựng nào trong Unit này.</p>';
+                return;
+            }
+
+            vocabulary.forEach(voca => {
+                const card = document.createElement('div');
+                card.classList.add('voca-card', 'bg-white', 'p-5', 'rounded-xl', 'shadow-lg', 'border-l-4', 'border-blue-500');
+                card.innerHTML = `
+                    <p class="text-2xl font-bold text-gray-800">${voca.word}</p>
+                    <p class="text-sm text-red-500 font-mono italic mb-2">${voca.pronunciation}</p>
+                    <p class="text-lg font-semibold text-blue-600">${voca.meaning}</p>
+                    <p class="text-xs font-medium text-gray-500 mt-1">Loại từ: <span class="uppercase">${voca.type}</span></p>
+                `;
+                vocabularyList.appendChild(card);
+            });
+        }
+
+        // Load Initial Vocabulary
+        window.loadInitialVocabulary = function() {
+            const data = getVocabularyData();
+            if (Object.keys(data).length > 0) {
+                currentUnit = Object.keys(data)[0]; // Mặc định chọn Unit đầu tiên
+                selectUnit(currentUnit);
+            }
+        }
+
+        // Search Vocabulary
+        window.searchVocabulary = function() {
+            const searchText = document.getElementById('search-input').value.toLowerCase().trim();
+            const currentVoca = getVocabularyData()[currentUnit];
+
+            if (!searchText) {
+                renderVocabulary(currentVoca);
+                return;
+            }
+
+            const filteredVoca = currentVoca.filter(voca => {
+                return voca.word.toLowerCase().includes(searchText) || 
+                       voca.meaning.toLowerCase().includes(searchText);
+            });
+
+            renderVocabulary(filteredVoca);
+        }
+
+        // --- QUIZ LOGIC ---
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        window.startQuiz = function() {
+            const currentVoca = getVocabularyData()[currentUnit];
+            
+            if (!currentVoca || currentVoca.length < 5) {
+                vocabularyList.innerHTML = `
+                    <p class="col-span-full text-center text-xl text-red-500 p-8">
+                        Không đủ từ vựng để tạo Quiz. Cần ít nhất 5 từ.
+                    </p>`;
+                return;
+            }
+
+            // Chọn ngẫu nhiên 10 từ (hoặc tất cả nếu ít hơn 10)
+            quizQuestions = shuffle([...currentVoca]).slice(0, MAX_QUIZ_QUESTIONS).map(v => ({
+                meaning: v.meaning,
+                word: v.word.toLowerCase(), // Chuẩn hóa đáp án về chữ thường
+                id: crypto.randomUUID()
+            }));
+
+            let quizHTML = '';
+            quizQuestions.forEach((q, index) => {
+                quizHTML += `
+                    <div class="p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200">
+                        <label for="q-${q.id}" class="block text-lg font-semibold mb-2 text-gray-700">
+                            ${index + 1}. Viết từ tiếng Anh có nghĩa là: <span class="text-blue-600 font-bold">${q.meaning}</span>
+                        </label>
+                        <input type="text" id="q-${q.id}" name="q-${q.id}" 
+                               class="w-full p-2 border-2 border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500 transition duration-150" 
+                               placeholder="Nhập từ vựng tiếng Anh (không dấu)" required>
+                    </div>
+                `;
+            });
+            
+            quizHTML += `
+                <div class="text-center pt-4">
+                    <button type="submit" class="bg-red-500 text-white font-bold py-3 px-10 rounded-full shadow-lg hover:bg-red-600 transition duration-300 transform hover:scale-105">
+                        <i class="fas fa-check-circle mr-2"></i> Nộp Bài
+                    </button>
+                </div>
+            `;
+
+            quizForm.innerHTML = quizHTML;
+            quizIntro.classList.add('hidden');
+            quizForm.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+            restartButton.classList.add('hidden');
+            quizForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        window.submitQuiz = function(event) {
+            event.preventDefault();
+            let score = 0;
+            const total = quizQuestions.length;
+            let resultHTML = '<h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Chi tiết Đáp án</h3><ul class="space-y-3">';
+
+            quizQuestions.forEach((q, index) => {
+                const inputElement = document.getElementById(`q-${q.id}`);
+                const userAnswer = inputElement.value.toLowerCase().trim();
+                const isCorrect = userAnswer === q.word;
+                
+                if (isCorrect) {
+                    score++;
+                    resultHTML += `<li class="p-3 bg-green-50 rounded-lg border border-green-200">`;
+                } else {
+                    resultHTML += `<li class="p-3 bg-red-50 rounded-lg border border-red-200">`;
+                }
+                
+                // Hiển thị kết quả chi tiết
+                resultHTML += `
+                    <p class="font-semibold">${index + 1}. ${q.meaning}</p>
+                    <p>Đáp án của bạn: <span class="font-mono text-gray-700">${inputElement.value}</span></p>
+                    <p>Đáp án đúng: <span class="font-bold text-green-700">${q.word}</span></p>
+                </li>`;
+            });
+            
+            resultHTML += '</ul>';
+
+            const scorePercent = (score / total) * 100;
+            let feedbackText;
+            let scoreClass;
+
+            if (scorePercent >= 80) {
+                feedbackText = 'Tuyệt vời! Bạn đã nắm vững từ vựng.';
+                scoreClass = 'bg-green-100 text-green-800 border-green-300';
+            } else if (scorePercent >= 50) {
+                feedbackText = 'Khá tốt! Hãy cố gắng ôn tập thêm.';
+                scoreClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+            } else {
+                feedbackText = 'Bạn cần ôn tập kỹ hơn về Unit này.';
+                scoreClass = 'bg-red-100 text-red-800 border-red-300';
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="text-center p-4 ${scoreClass} rounded-xl mb-6 border-2">
+                    <p class="text-4xl font-extrabold">${score}/${total}</p>
+                    <p class="text-xl font-bold mt-1">Đạt ${scorePercent.toFixed(0)}%</p>
+                    <p class="mt-2 font-medium">${feedbackText}</p>
+                </div>
+                ${resultHTML}
+            `;
+            
+            quizForm.classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+            restartButton.classList.remove('hidden');
+            
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // --- UTILITIES ---
+
+        // Hàm tự động mở rộng textarea
+        window.autoExpand = function(field) {
+            field.style.height = 'inherit';
+            const computed = window.getComputedStyle(field);
+            const height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+                         + parseInt(computed.getPropertyValue('padding-top'), 10)
+                         + field.scrollHeight
+                         + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+                         + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+            field.style.height = height + 'px';
+        };
+
+        // --- CHATBOX LOGIC (API Calls) ---
+        
+        const chatForm = document.getElementById('chat-form');
+        const promptInput = document.getElementById('prompt-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const imageInput = document.getElementById('image-input');
+        const removeImageBtn = document.getElementById('remove-image-btn');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const sendBtn = document.getElementById('send-btn');
+        let selectedImageBase64 = null;
+        const API_KEY = ""; // Sử dụng API Key rỗng
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        
+        // Biến để lưu trữ lịch sử trò chuyện
+        let chatHistory = [];
+        
+        function appendMessage(role, text, sources = [], imageBase64 = null) {
+            const isUser = role === 'user';
+            const messageClass = isUser ? 'justify-end' : 'justify-start';
+            const bubbleClass = isUser ? 'bg-red-500 text-white rounded-tr-none' : 'bg-gray-200 text-gray-800 rounded-tl-none';
+            
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('flex', messageClass);
+            
+            let sourceHTML = sources.length > 0 ? 
+                '<div class="text-xs mt-2 pt-2 border-t border-gray-300 text-gray-600 italic">' +
+                'Nguồn: ' + sources.map(s => `<a href="${s.uri}" target="_blank" class="text-blue-500 hover:underline">${s.title || s.uri}</a>`).join(', ') +
+                '</div>' : '';
+
+            let imageHTML = imageBase64 ? 
+                `<img src="${imageBase64}" class="mt-2 max-h-40 w-auto rounded-md object-contain" alt="User Image">` : '';
+
+            messageElement.innerHTML = `
+                <div class="p-3 rounded-2xl max-w-[80%] shadow-sm ${bubbleClass}">
+                    ${imageHTML}
+                    ${text}
+                    ${sourceHTML}
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Cuộn xuống tin nhắn mới nhất
+        }
+        
+        function addLoadingMessage() {
+            const loadingElement = document.createElement('div');
+            loadingElement.id = 'loading-message';
+            loadingElement.classList.add('flex', 'justify-start');
+            loadingElement.innerHTML = `
+                <div class="p-3 rounded-2xl rounded-tl-none max-w-[80%] bg-gray-200 shadow-sm">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> Gia Sư AI đang nghĩ...
+                </div>
+            `;
+            chatMessages.appendChild(loadingElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeLoadingMessage() {
+            const loadingElement = document.getElementById('loading-message');
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
+        
+        function handleImageSelection(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectedImageBase64 = e.target.result.split(',')[1];
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.classList.remove('hidden');
+                    autoExpand(promptInput);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleImageRemoval() {
+            selectedImageBase64 = null;
+            imageInput.value = ''; // Reset input file
+            imagePreview.src = '';
+            imagePreviewContainer.classList.add('hidden');
+            autoExpand(promptInput);
+        }
+
+        async function fetchWithExponentialBackoff(url, options, retries = 5, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status !== 429) { // 429 is Too Many Requests
+                        return response;
+                    }
+                    // If 429, wait and retry
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
+                } catch (error) {
+                    // Handle network errors, wait and retry
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+            throw new Error("API request failed after multiple retries.");
+        }
+
+        async function handleChatSubmit(event) {
+            event.preventDefault();
+            const userPrompt = promptInput.value.trim();
+            const imageBase64 = selectedImageBase64;
+
+            if (!userPrompt && !imageBase64) return;
+            
+            // Thêm tin nhắn người dùng vào UI
+            appendMessage('user', userPrompt, [], imageBase64 ? `data:image/png;base64,${imageBase64}` : null);
+
+            // Thêm tin nhắn chờ
+            addLoadingMessage();
+            sendBtn.disabled = true;
+
+            // Xây dựng payload cho API
+            let parts = [];
+            if (userPrompt) {
+                parts.push({ text: userPrompt });
+            }
+            if (imageBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/png", // Giả định là PNG cho đơn giản
+                        data: imageBase64
+                    }
+                });
+            }
+            
+            const systemInstruction = "Bạn là Gia Sư AI thân thiện, am hiểu về chương trình Tiếng Anh 10 (Sách Kết Nối Tri Thức). Hãy giải đáp các thắc mắc về từ vựng, ngữ pháp, hoặc cung cấp thông tin liên quan bằng tiếng Việt. Luôn sử dụng Google Search để trả lời các câu hỏi về thông tin cập nhật hoặc cần kiểm chứng.";
+
+            const payload = {
+                contents: [{ role: "user", parts: parts }],
+                // Luôn sử dụng Google Search để đảm bảo tính thời sự và chính xác
+                tools: [{ google_search: {} }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            // Dọn dẹp input và hình ảnh
+            promptInput.value = '';
+            autoExpand(promptInput);
+            handleImageRemoval(); // Xóa hình ảnh sau khi gửi
+            
+            try {
+                const response = await fetchWithExponentialBackoff(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                removeLoadingMessage();
+                sendBtn.disabled = false;
+
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const aiResponseText = candidate.content.parts[0].text;
+                    
+                    // Xử lý trích dẫn nguồn
+                    let sources = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                    
+                    appendMessage('model', aiResponseText, sources);
+                    
+                } else {
+                    appendMessage('model', 'Xin lỗi, tôi không thể tạo ra phản hồi lúc này. Vui lòng thử lại sau.');
+                }
+
+            } catch (error) {
+                console.error("Lỗi API Chat:", error);
+                removeLoadingMessage();
+                sendBtn.disabled = false;
+                appendMessage('model', 'Đã xảy ra lỗi kết nối. Vui lòng kiểm tra mạng và thử lại.');
+            }
+        }
+        
+        function setupChatListeners() {
+            const toggleButton = document.getElementById('ai-chat-toggle');
+            const chatContainer = document.getElementById('ai-chat-container');
+            const closeButton = document.getElementById('close-chat-btn');
+            
+            toggleButton.addEventListener('click', () => {
+                chatContainer.classList.toggle('hidden');
+                if (!chatContainer.classList.contains('hidden')) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    promptInput.focus();
+                }
+            });
+
+            closeButton.addEventListener('click', () => {
+                chatContainer.classList.add('hidden');
+            });
+
+            // Image Input Listeners
+            imageInput.addEventListener('change', handleImageSelection);
+            removeImageBtn.addEventListener('click', handleImageRemoval);
+
+            // Main chat submit handler
+            chatForm.addEventListener('submit', handleChatSubmit);
+        }
+
+        // Khởi tạo các listeners sau khi DOM đã tải xong
+        window.addEventListener('load', setupChatListeners);
+    </script>
+</body>
+</html>
