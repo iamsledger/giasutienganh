@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sổ Tay & Quiz Từ Vựng Tiếng Anh 10 Global Success</title>
-    <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Cài đặt font Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <!-- Load Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+
     <style>
         /* Font và màu sắc cơ bản */
         body {
@@ -23,533 +24,760 @@
         .unit-button.active {
             background-color: #10b981; /* Emerald-500 */
             color: white;
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4), 0 2px 4px -2px rgba(16, 185, 129, 0.4);
         }
-        .unit-button {
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            background-color: #e5e7eb; /* Gray-200 */
-            color: #4b5563; /* Gray-600 */
-            border: none;
-            cursor: pointer;
-            margin: 0.25rem;
-        }
-        .unit-button:hover:not(.active) {
-            background-color: #d1d5db; /* Gray-300 */
-        }
-
-        /* Style cho các Tab */
-        .tab-button {
-            padding: 0.75rem 1.5rem;
-            font-weight: 700;
-            border-bottom: 3px solid transparent;
-            color: #6b7280; /* Gray-500 */
-            transition: all 0.2s;
-        }
+        /* Style cho tab đang hoạt động */
         .tab-button.active {
-            color: #3b82f6; /* Blue-500 */
-            border-color: #3b82f6;
+            border-bottom: 3px solid #10b981; /* Emerald-500 */
+            color: #10b981;
+            font-weight: 700;
+        }
+        /* Style cho sub-tab (Ôn luyện) đang hoạt động */
+        .practice-sub-tab-button.active {
+            background-color: #10b981; /* Emerald-500 */
+            color: white;
+        }
+        .practice-sub-tab-button:not(.active) {
+            background-color: #e5e7eb; /* Gray-200 */
+            color: #1f2937;
         }
 
-        .quiz-button {
-            transition: transform 0.1s;
+        /* Style cho Flashcard */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 300px;
         }
-
-        .quiz-button:active {
-            transform: scale(0.98);
-        }
-
-        /* CSS cho Flashcard */
-        .vocabulary-card {
-            border: 1px solid #e5e7eb;
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            height: 220px; /* Chiều cao cố định cho hiệu ứng flip */
+        .flashcard {
+            width: 100%;
+            height: 100%;
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.6s;
             cursor: pointer;
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
         }
-
-        #front-card, #back-card {
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-face {
             position: absolute;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-        }
-
-        #front-card {
-            z-index: 2;
-            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 24px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            text-align: center;
+            background-color: white;
         }
-        
-        #back-card {
-            background-color: #ecfdf5; /* Emerald-50 */
+        .flashcard-back {
             transform: rotateY(180deg);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            background-color: #ecfdf5; /* Emerald-50 */
         }
-        
-        /* Hiệu ứng nhập/sai */
-        .correct-answer {
-            background-color: #ecfdf5; /* Green-50 */
+        /* Style cho Quiz */
+        .quiz-option {
+            transition: background-color 0.3s, border-color 0.3s;
+            cursor: pointer;
+        }
+        .quiz-option.correct {
+            background-color: #d1fae5; /* Green-100 */
             border-color: #10b981; /* Emerald-500 */
+            font-weight: 700;
         }
-        .wrong-answer {
-            background-color: #fef2f2; /* Red-50 */
+        .quiz-option.incorrect {
+            background-color: #fee2e2; /* Red-100 */
             border-color: #ef4444; /* Red-500 */
         }
-        /* Style cho loại từ (POS) */
-        .pos-tag {
-            font-size: 0.75rem; /* text-xs */
-            font-weight: 700; /* font-bold */
-            color: #f97316; /* Orange-500 */
-            border: 1px solid #f97316;
-            padding: 2px 6px;
-            border-radius: 0.375rem; /* rounded-md */
-            margin-left: 0.5rem;
+        
+        /* Matching Word Styles (Nối Từ) */
+        .card-item {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
-        /* Style cho phiên âm */
-        .ipa {
-            font-size: 1.125rem; /* text-lg */
-            color: #4b5563; /* Gray-600 */
-            font-style: italic;
-            margin-top: 0.25rem;
+        .card-item:hover:not(.matched):not(.selected) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .selected {
+            border: 3px solid #3b82f6 !important; /* Blue-500 */
+            background-color: #eff6ff !important; /* Blue-50 */
+            transform: scale(1.02);
+        }
+        .correct {
+            border: 3px solid #10b981 !important; /* Emerald-500 */
+            background-color: #ecfdf5 !important; /* Emerald-50 */
+        }
+        .incorrect {
+            border: 3px solid #ef4444 !important; /* Red-500 */
+            background-color: #fef2f2 !important; /* Red-50 */
+        }
+        .matched {
+            cursor: default;
+            pointer-events: none;
+        }
+        
+        /* Audio Hunt Styles (NEW) */
+        #audioHuntSpeaker {
+            transition: 0.2s;
+        }
+        #audioHuntSpeaker:hover {
+            transform: scale(1.1);
+        }
+        .word-card.bg-green-500, .word-card.bg-red-500 {
+            border-color: transparent !important;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            color: white !important;
+            pointer-events: none !important;
+        }
+        .word-card.bg-red-500 {
+            background-color: #f44336 !important;
+        }
+        .word-card.bg-green-500 {
+            background-color: #4CAF50 !important;
+        }
+        .word-card.disabled-round-end {
+            pointer-events: none !important;
+        }
+
+        /* NEW: Word Puzzle Styles (Tetris/Falling Letters) */
+        
+        /* Game Grid Container */
+        #gameArea-word-puzzle {
+            /* These styles will be set by JS based on constants */
+            /* But we define defaults here */
+            display: grid;
+            width: 90vw; /* Responsive size */
+            max-width: 300px;
+            height: 90vw;
+            max-height: 300px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 4px solid #1f2937;
+            background-color: #f0f0f0; /* Light background for the grid */
+        }
+
+        /* Individual Grid Cells */
+        .grid-cell {
+            background-color: transparent;
+            border: 1px solid #ccc; /* Subtle grid lines */
+            box-sizing: border-box;
+            display: flex; /* Allow content inside cell */
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Letter Block (Falling or Locked) */
+        .letter-block {
+            width: 100%;
+            height: 100%;
+            border-radius: 3px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+            user-select: none;
+            transition: opacity 0.1s;
+        }
+
+        .letter-block.locked {
+            cursor: pointer; /* Clickable when locked */
+            opacity: 1;
+        }
+        
+        /* Dim used blocks in the grid */
+        .letter-block[data-used="true"] {
+            opacity: 0.4; 
+            pointer-events: none;
+        }
+
+        /* Drop Zone Styles (For arranging the final word) */
+        #dropZone-word-puzzle {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            min-height: 60px;
+        }
+        .dropSlot-word-puzzle {
+            width: 40px; 
+            height: 40px;
+            margin: 0 5px;
+            border: 2px dashed #333;
+            border-radius: 5px;
+            text-align: center;
+            line-height: 36px; 
+            font-size: 20px;
+            font-weight: bold;
+            background: #fff;
+            color: #333;
+            cursor: pointer; /* Cho phép click để xóa */
+        }
+        
+        #info-word-puzzle {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #message-word-puzzle { 
+            margin-top: 10px; 
+            font-size: 18px; 
+            font-weight: bold; 
+        }
+
+        /* Responsive adjustments for Drop Zone Slots */
+        @media (min-width: 640px) {
+            .dropSlot-word-puzzle {
+                width: 50px;
+                height: 50px;
+                line-height: 46px;
+                font-size: 24px;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <div class="max-w-4xl mx-auto p-4 md:p-8">
+<body>
+
+    <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">Sổ Tay Từ Vựng Tiếng Anh</h1>
-            <p class="text-xl text-gray-600 font-medium">Tiếng Anh 10 - Global Success</p>
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                Sổ Tay Từ Vựng
+            </h1>
+            <p class="mt-2 text-xl text-emerald-600">
+                Tiếng Anh 10 Global Success
+            </div>
         </header>
 
-        <!-- Khối chọn Unit -->
-        <div class="bg-white rounded-xl shadow-lg mb-6 p-4">
-            <h2 class="text-lg font-bold mb-3 text-gray-700">Chọn Unit ôn tập:</h2>
-            <div class="flex flex-wrap justify-center space-x-2" id="unit-selection">
-                <!-- Các nút chọn Unit từ 1 đến 10 -->
-                <button id="unit-1" class="unit-button active" data-unit="unit-1">Unit 1</button>
-                <button id="unit-2" class="unit-button" data-unit="unit-2">Unit 2</button>
-                <button id="unit-3" class="unit-button" data-unit="unit-3">Unit 3</button>
-                <button id="unit-4" class="unit-button" data-unit="unit-4">Unit 4</button>
-                <button id="unit-5" class="unit-button" data-unit="unit-5">Unit 5</button>
-                <button id="unit-6" class="unit-button" data-unit="unit-6">Unit 6</button>
-                <button id="unit-7" class="unit-button" data-unit="unit-7">Unit 7</button>
-                <button id="unit-8" class="unit-button" data-unit="unit-8">Unit 8</button>
-                <button id="unit-9" class="unit-button" data-unit="unit-9">Unit 9</button>
-                <button id="unit-10" class="unit-button" data-unit="unit-10">Unit 10</button>
-            </div>
+        <div id="unit-selection" class="flex flex-wrap justify-center gap-2 p-4 bg-white rounded-xl shadow-lg mb-6">
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-1">UNIT 1</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-2">UNIT 2</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-3">UNIT 3</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-4">UNIT 4</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-5">UNIT 5</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-6">UNIT 6</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-7">UNIT 7</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-8">UNIT 8</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-9">UNIT 9</button>
+            <button class="unit-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-full transition-all duration-200 hover:bg-emerald-400 hover:text-white text-sm" data-unit="unit-10">UNIT 10</button>
         </div>
 
-        <!-- Khối Tab Navigation -->
-        <div class="bg-white rounded-t-xl shadow-md border-b border-gray-200">
-            <div class="flex justify-center md:justify-start overflow-x-auto">
-                <button class="tab-button active" data-tab="flashcard">
-                    <i class="fas fa-layer-group mr-2"></i> Thẻ từ
-                </button>
-                <button class="tab-button" data-tab="list">
-                    <i class="fas fa-list-ul mr-2"></i> Danh sách
-                </button>
-                <button class="tab-button" data-tab="quiz">
-                    <i class="fas fa-graduation-cap mr-2"></i> Ôn luyện
-                </button>
-            </div>
+        <div class="flex border-b border-gray-300 bg-white rounded-t-xl overflow-hidden shadow-lg">
+            <button class="tab-button w-1/3 py-3 px-4 text-gray-600 transition duration-200" data-tab="flashcard">
+                <i class="fas fa-bookmark mr-2"></i> Flashcard
+            </button>
+            <button class="tab-button w-1/3 py-3 px-4 text-gray-600 transition duration-200" data-tab="vocabulary-list">
+                <i class="fas fa-list-alt mr-2"></i> Danh sách từ vựng
+            </button>
+            <button class="tab-button w-1/3 py-3 px-4 text-gray-600 transition duration-200" data-tab="practice">
+                <i class="fas fa-brain mr-2"></i> Ôn luyện
+            </button>
         </div>
 
-        <!-- Khối Nội dung Tab -->
-        <div id="tab-content" class="bg-white rounded-b-xl shadow-lg p-6 border border-t-0 border-gray-200 min-h-[400px]">
+        <div id="content-area" class="bg-white p-6 rounded-b-xl shadow-lg min-h-[400px]">
 
-            <h2 id="content-title" class="text-2xl font-extrabold text-gray-700 mb-6 text-center">Unit 1: Thẻ từ (Flashcard)</h2>
-
-            <!-- 1. Nội dung Tab Flashcard -->
-            <div id="flashcard-tab" class="content-tab" data-tab-name="flashcard">
-                <!-- Flashcard Counter and Navigation -->
-                <div id="flashcard-nav" class="flex justify-between items-center mb-6">
-                    <button id="prev-flashcard" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg disabled:opacity-50 transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i> Quay Lại
-                    </button>
-                    <span id="flashcard-counter" class="text-lg font-semibold text-gray-600"></span>
-                    <button id="next-flashcard" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 transition-colors">
-                        Tiếp Theo <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
+            <h2 id="unit-title" class="text-2xl font-bold text-gray-900 mb-6 text-center border-b pb-3"></h2>
+            
+            <div id="flashcard-tab" class="tab-content hidden">
+                <div id="flashcard-container" class="flashcard-container mb-6">
+                    <div id="flashcard" class="flashcard">
+                        <div class="flashcard-face bg-emerald-500 text-white flex-col justify-center">
+                            <div id="word-to-speak" class="flex items-center justify-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-emerald-600 transition" onclick="speakWord(document.getElementById('card-word').textContent)">
+                                <span id="card-word" class="text-4xl font-extrabold">Từ Vựng</span>
+                                <i class="fas fa-volume-up text-3xl"></i>
+                            </div>
+                            <span id="card-pos" class="text-xl mt-2 italic opacity-80"></span>
+                            <p class="text-lg mt-1 font-mono italic">/ <span id="card-ipa-front">IPA</span> /</p> 
+                        </div>
+                        <div class="flashcard-face flashcard-back flex-col justify-start">
+                            <p class="text-xl font-bold text-gray-900 mb-2">Định Nghĩa:</p>
+                            <span id="card-definition" class="text-2xl font-semibold text-emerald-700 mb-4"></span>
+                            <p class="text-lg text-gray-700">/ <span id="card-ipa" class="font-mono italic"></span> /</p>
+                            <p class="mt-4 text-md text-gray-600 border-t pt-2">Ví dụ: <span id="card-example" class="italic"></span></p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Single Flashcard Display Area -->
-                <div id="flashcard-container" class="space-y-4 min-h-[220px] flex items-center justify-center">
-                    <div id="current-flashcard" class="w-full max-w-lg">
-                        <p class="text-center text-gray-500 italic">Chọn Unit để xem danh sách từ vựng.</p>
+                <div class="flex justify-center space-x-4 mt-6">
+                    <button id="prev-card-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full transition duration-150">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button id="flip-card-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded-full shadow-md transition duration-150">
+                        Lật Thẻ
+                    </button>
+                    <button id="next-card-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full transition duration-150">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+                <p id="card-counter" class="text-center mt-4 text-gray-500 text-sm"></p>
+            </div>
+
+            <div id="vocabulary-list-tab" class="tab-content hidden">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Bảng Từ Vựng Chi Tiết</h3>
+                    <div id="vocab-table-container" class="overflow-x-auto">
+                        <p class="text-gray-500">Đang tải danh sách từ vựng...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. Nội dung Tab Danh sách từ vựng -->
-            <div id="list-tab" class="content-tab hidden" data-tab-name="list">
-                <table class="min-w-full divide-y divide-gray-200 shadow-md rounded-lg overflow-hidden">
-                    <thead class="bg-blue-50">
-                        <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                                Từ Vựng
-                            </th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 hidden sm:table-cell">
-                                IPA/Loại
-                            </th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/4">
-                                Định Nghĩa
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="vocabulary-list-body" class="bg-white divide-y divide-gray-100">
-                        <!-- Danh sách từ sẽ được chèn vào đây -->
-                    </tbody>
-                </table>
-            </div>
+            <div id="practice-tab" class="tab-content hidden">
+                <div class="mb-6 border-b pb-3 flex space-x-2 flex-wrap">
+                    <button class="practice-sub-tab-button active bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200" data-practice-tab="quiz">
+                        <i class="fas fa-question-circle mr-1"></i> Trắc Nghiệm
+                    </button>
+                    <button class="practice-sub-tab-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-all duration-200" data-practice-tab="match-game">
+                        <i class="fas fa-link mr-1"></i> Nối Từ
+                    </button>
+                    <button class="practice-sub-tab-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-all duration-200" data-practice-tab="audio-hunt">
+                        <i class="fas fa-volume-up mr-1"></i> Nghe & Chọn
+                    </button>
+                    <button class="practice-sub-tab-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-all duration-200" data-practice-tab="fill-in-blanks">
+                        <i class="fas fa-edit mr-1"></i> Điền Từ
+                    </button>
+                    <button class="practice-sub-tab-button bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-all duration-200" data-practice-tab="word-puzzle-tetris">
+                        <i class="fas fa-cubes mr-1"></i> Xếp Chữ
+                    </button>
+                </div>
 
-            <!-- 3. Nội dung Tab Ôn luyện -->
-            <div id="quiz-tab" class="content-tab hidden" data-tab-name="quiz">
-                <div id="quiz-options" class="flex flex-wrap justify-center gap-4 mb-8">
-                    <button id="quiz-writing" data-quiz-type="writing" class="quiz-button bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg flex items-center shadow-md shadow-pink-300">
-                        <i class="fas fa-keyboard mr-2"></i> Viết Từ (Anh → Việt)
-                    </button>
-                    <button id="quiz-multiple-choice" data-quiz-type="multiple-choice" class="quiz-button bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg flex items-center shadow-md shadow-indigo-300">
-                        <i class="fas fa-list-ol mr-2"></i> Trắc Nghiệm (Việt → Anh)
-                    </button>
+                <div id="practice-quiz-content" class="practice-sub-content">
+                    <div id="quiz-content">
+                        <p id="quiz-question" class="text-xl font-semibold mb-6 p-4 border-l-4 border-blue-500 bg-blue-50 rounded-lg"></p>
+                        <div id="quiz-options" class="space-y-3">
+                            </div>
+                        <button id="quiz-next-btn" class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md transition duration-150 hidden">
+                            Câu Tiếp Theo <i class="fas fa-chevron-right ml-2"></i>
+                        </button>
+                        <p id="quiz-message" class="mt-4 text-lg font-bold text-center"></p>
+                    </div>
+                </div>
+
+                <div id="practice-word-puzzle-content" class="practice-sub-content hidden">
+                    <div class="w-full text-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2">Bài Tập Nối Từ Vựng Anh - Việt</h1>
+                        <p id="instruction" class="text-gray-600">Chọn một từ tiếng Anh, sau đó chọn nghĩa tiếng Việt tương ứng. (Tối đa 8 từ/lượt chơi)</p>
+                        
+                        <div id="match-message-box" class="mt-4 p-3 rounded-lg text-sm font-medium hidden"></div>
+                    </div>
+
+                    <div id="game-grid" class="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div id="english-col-match" class="space-y-3 p-4 bg-white rounded-xl shadow-lg border border-gray-200">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4 border-b pb-2">Từ Tiếng Anh</h2>
+                            </div>
+
+                        <div id="vietnamese-col-match" class="space-y-3 p-4 bg-white rounded-xl shadow-lg border border-gray-200">
+                            <h2 class="text-xl font-semibold text-green-700 mb-4 border-b pb-2">Nghĩa Tiếng Việt</h2>
+                            </div>
+                    </div>
+
+                    <div class="w-full mt-8 flex justify-center space-x-4">
+                        <button id="check-btn-match" onclick="checkMatchAnswers()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50">
+                            <i class="fas fa-check-circle mr-2"></i>Kiểm Tra Kết Quả
+                        </button>
+                        <button id="reset-btn-match" onclick="initMatchGame()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-md">
+                            <i class="fas fa-redo mr-2"></i>Chơi Lại
+                        </button>
+                    </div>
+                </div>
+
+                <div id="practice-audio-hunt-content" class="practice-sub-content hidden text-center p-4 bg-white rounded-xl shadow-lg">
+                    
+                    <h1 class="text-3xl font-extrabold text-blue-700 mb-6">Nghe và chọn từ đã nghe</h1>
+
+                    <div id="audio-hunt-topbar" class="flex justify-between mx-auto max-w-lg mb-6 text-lg font-semibold border-b pb-2 px-4">
+                        <div>Điểm: <span id="audioHuntScore">0</span></div>
+                        <div>Vòng: <span id="audioHuntRound">1</span>/10</div>
+                        <div>⏱ <span id="audioHuntTimer">3</span>s</div>
+                    </div>
+
+                    <div id="audioHuntSpeaker" class="w-20 h-20 mx-auto bg-orange-500 rounded-full flex justify-center items-center cursor-pointer text-4xl text-white shadow-xl hover:scale-110 transition-transform mb-4">
+                        <i class="fas fa-volume-up"></i>
+                    </div>
+                    <p class="text-gray-600 mb-4">Nhấn để nghe lại</p>
+
+                    <p id="audioHuntMessage" class="text-lg font-bold h-7 mb-4 text-center"></p>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto" id="audioHuntWordGrid"></div>
+
+                    <div id="audioHuntGameover" class="hidden text-center text-xl mt-8 p-6 bg-emerald-50 rounded-xl border border-emerald-300">
+                        <p class="text-3xl font-bold text-emerald-700 mb-4">🎉 Hoàn thành!</p>
+                        <p class="text-lg">Điểm của bạn: <span id="audioHuntFinalScore" class="font-extrabold text-blue-600 text-2xl"></span></p>
+                        <button id="audioHuntRestartBtn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150">
+                            Chơi lại <i class="fas fa-redo ml-2"></i>
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Khối Quiz chính -->
-                <div id="quiz-content">
-                    <div class="text-center mb-6">
-                        <span class="text-sm font-semibold text-gray-500">Câu hỏi: </span>
-                        <span id="question-index" class="text-lg font-bold text-gray-800">1</span>
-                        <span class="text-lg font-bold text-gray-800"> / </span>
-                        <span id="total-questions" class="text-lg font-bold text-gray-800">5</span>
-                    </div>
-
-                    <!-- Khu vực hiển thị câu hỏi -->
-                    <div id="question-area" class="min-h-[150px] flex flex-col justify-center items-center">
-                        <p id="writing-prompt" class="text-2xl font-bold text-center text-gray-700 mb-4"></p>
-                        <input type="text" id="writing-input" class="p-3 border-2 border-gray-300 rounded-lg w-full max-w-sm text-center text-xl focus:border-emerald-500 outline-none" placeholder="Nhập từ tiếng Anh...">
-                        <button id="check-writing-answer" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg mt-4">Kiểm Tra</button>
-
-                        <!-- Khu vực trắc nghiệm -->
-                        <div id="multiple-choice-options" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg hidden">
-                            <!-- Các nút lựa chọn sẽ được chèn vào đây -->
+                <div id="practice-fill-in-blanks-content" class="practice-sub-content hidden p-4">
+                    <h1 class="text-3xl font-extrabold text-purple-700 mb-6 text-center">📝 BÀI TẬP ĐIỀN TỪ</h1>
+                    <div id="blank-question-box" class="p-6 bg-purple-50 rounded-xl border border-purple-200 mb-6">
+                        <div id="blank-sentence" class="text-center">
+                            <p class="text-xl font-medium text-gray-800 mb-4">Đang tải câu hỏi...</p>
+                        </div>
+                        <div class="flex items-center space-x-3 mt-4">
+                            <input type="text" id="blank-input" class="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-purple-500 text-lg" placeholder="Nhập từ cần điền (không dấu)">
+                            <button id="blank-check-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150">
+                                Kiểm Tra
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Khu vực kết quả và nút tiếp theo -->
-                    <div id="result-area" class="mt-6 pt-4 border-t border-gray-200 text-center hidden">
-                        <p id="feedback-message" class="text-xl font-semibold mb-3"></p>
-                        <p id="correct-answer-display" class="text-md text-gray-600 mb-4 hidden"></p>
-                        <button id="next-question" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">
-                            <i class="fas fa-arrow-right mr-2"></i> Câu Tiếp Theo
-                        </button>
-                    </div>
-                    
-                    <!-- Khu vực kết quả cuối cùng -->
-                    <div id="final-result" class="mt-6 pt-4 border-t border-gray-200 text-center hidden">
-                        <h4 class="text-3xl font-extrabold text-green-700 mb-3">Hoàn Thành Quiz!</h4>
-                        <p class="text-xl text-gray-700 mb-4">Điểm của bạn: <span id="final-score" class="text-3xl font-extrabold text-red-500"></span> / <span id="final-total" class="text-2xl font-bold"></span></p>
-                        <button id="restart-quiz" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-6 rounded-lg mt-3">
-                            <i class="fas fa-redo-alt mr-2"></i> Làm Lại Quiz
-                        </button>
+                    <p id="blank-message" class="text-center text-lg font-bold h-8 mb-4"></p>
+                    <button id="blank-next-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-md transition duration-150 hidden">
+                        Câu Tiếp Theo <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                    <div id="blank-stats" class="text-center mt-6 text-gray-600">
+                        <span id="blank-score" class="font-bold text-xl text-green-700">0</span> điểm | <span id="blank-progress">1/10</span>
                     </div>
                 </div>
-            </div> <!-- End Quiz Tab -->
+                
+                <div id="practice-word-puzzle-tetris-content" class="practice-sub-content hidden p-4 text-center">
+                    <h1 class="text-3xl font-extrabold text-teal-700 mb-2">🧩 XẾP CHỮ (FALLING LETTERS)</h1>
+                    <p class="text-gray-600 mb-4">Vuốt ngang để di chuyển, vuốt xuống để thả nhanh. Chạm vào **chữ cái màu sáng** đã dừng để xếp từ.</p>
+                    
+                    <div id="gameArea-word-puzzle" class="shadow-xl mx-auto bg-gray-200">
+                        </div>
+                    
+                    <div id="dropZone-word-puzzle"></div>
+                    <div id="info-word-puzzle" class="text-gray-700"></div>
+                    
+                    <div class="flex justify-center space-x-4 mt-6">
+                        <button id="checkBtn-word-puzzle" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50">
+                            <i class="fas fa-check-circle mr-2"></i>Kiểm tra từ
+                        </button>
+                        <button id="resetBtn-word-puzzle" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-8 rounded-xl transition-all duration-200 shadow-md hidden">
+                            <i class="fas fa-redo mr-2"></i>Reset từ ghép
+                        </button>
+                    </div>
+                    <div id="message-word-puzzle" class="text-center font-semibold h-6 mt-4"></div>
 
-        </div> <!-- End Tab Content -->
-
+                    <audio id="dropSound" src="https://actions.google.com/sounds/v1/foley/wood_fall.ogg"></audio>
+                    <audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+                </div>
+                </div>
+        </div>
+        
     </div>
 
-    <script type="module">
-        // Dữ liệu từ vựng cho 10 Unit (Đã thêm loại từ và IPA)
-        const vocabularyData = {
-            'unit-1': [
-                { word: 'volunteer', pos: 'n/v', ipa: '/ˌvɒlənˈtɪə(r)/', definition: 'Tình nguyện viên, người làm công việc thiện nguyện', example: 'She works as a volunteer at the local hospital.' },
-                { word: 'community', pos: 'n', ipa: '/kəˈmjuːnəti/', definition: 'Cộng đồng, khu dân cư', example: 'The community organised a clean-up day for the park.' },
-                { word: 'initiative', pos: 'n', ipa: '/ɪˈnɪʃətɪv/', definition: 'Sáng kiến, sự khởi xướng', example: 'A new recycling initiative was launched last month.' },
-                { word: 'charity', pos: 'n', ipa: '/ˈtʃærəti/', definition: 'Tổ chức từ thiện, việc làm từ thiện', example: 'They donate a portion of their profits to charity.' },
-                { word: 'facility', pos: 'n', ipa: '/fəˈsɪləti/', definition: 'Cơ sở vật chất, tiện nghi', example: 'The school has excellent sports facilities.' },
-            ],
-            'unit-2': [
-                { word: 'globalisation', pos: 'n', ipa: '/ˌɡləʊbəlaɪˈzeɪʃn/', definition: 'Sự toàn cầu hóa', example: 'Globalisation has increased cultural exchange worldwide.' },
-                { word: 'connectivity', pos: 'n', ipa: '/ˌkɒnekˈtɪvəti/', definition: 'Khả năng kết nối, sự kết nối', example: 'High-speed internet ensures reliable connectivity for remote work.' },
-                { word: 'innovation', pos: 'n', ipa: '/ˌɪnəˈveɪʃn/', definition: 'Sự đổi mới, sự sáng tạo', example: 'Technological innovation drives economic growth.' },
-                { word: 'digital', pos: 'adj', ipa: '/ˈdɪdʒɪtl/', definition: 'Kỹ thuật số, thuộc về số hóa', example: 'The digital revolution has transformed how we communicate.' },
-                { word: 'multinational', pos: 'adj', ipa: '/ˌmʌltiˈnæʃnəl/', definition: 'Đa quốc gia', example: 'Many multinational companies operate in Vietnam.' },
-            ],
-            'unit-3': [
-                { word: 'ecosystem', pos: 'n', ipa: '/ˈiːkəʊsɪstəm/', definition: 'Hệ sinh thái', example: 'Pollution can severely damage the marine ecosystem.' },
-                { word: 'sustainability', pos: 'n', ipa: '/səˌsteɪnəˈbɪləti/', definition: 'Sự bền vững', example: 'We must focus on sustainability for future generations.' },
-                { word: 'conservation', pos: 'n', ipa: '/ˌkɒnsəˈveɪʃn/', definition: 'Sự bảo tồn, sự bảo vệ', example: 'Wildlife conservation is essential to protect endangered species.' },
-                { word: 'deforestation', pos: 'n', ipa: '/ˌdiːˌfɒrɪˈsteɪʃn/', definition: 'Sự phá rừng', example: 'Deforestation leads to soil erosion and habitat loss.' },
-                { word: 'renewable', pos: 'adj', ipa: '/rɪˈnjuːəbl/', definition: 'Có thể tái tạo', example: 'Solar and wind power are excellent sources of renewable energy.' },
-            ],
-            'unit-4': [
-                { word: 'heritage', pos: 'n', ipa: '/ˈherɪtɪdʒ/', definition: 'Di sản, tài sản truyền đời', example: 'Ha Long Bay is a UNESCO World Heritage Site.' },
-                { word: 'archaeology', pos: 'n', ipa: '/ˌɑːkiˈɒlədʒi/', definition: 'Khảo cổ học', example: 'Archaeology helps us understand ancient civilisations.' },
-                { word: 'preservation', pos: 'n', ipa: '/ˌprezəˈveɪʃn/', definition: 'Sự bảo quản, giữ gìn', example: 'The government invested heavily in the preservation of the ancient town.' },
-                { word: 'landmark', pos: 'n', ipa: '/ˈlændmɑːk/', definition: 'Cột mốc, thắng cảnh nổi tiếng', example: 'The Eiffel Tower is a famous landmark in Paris.' },
-                { word: 'authentic', pos: 'adj', ipa: '/ɔːˈθentɪk/', definition: 'Xác thực, chân thực, nguyên bản', example: 'Tourists seek authentic cultural experiences in local villages.' },
-            ],
-            'unit-5': [
-                { word: 'curriculum', pos: 'n', ipa: '/kəˈrɪkjələm/', definition: 'Chương trình giảng dạy', example: 'The university updated its curriculum to include more digital skills.' },
-                { word: 'critical thinking', pos: 'n', ipa: '/ˌkrɪtɪkl ˈθɪŋkɪŋ/', definition: 'Tư duy phản biện', example: 'Developing critical thinking skills is vital for problem-solving.' },
-                { word: 'scholarship', pos: 'n', ipa: '/ˈskɒləʃɪp/', definition: 'Học bổng', example: 'She received a full scholarship to study abroad.' },
-                { word: 'vocational', pos: 'adj', ipa: '/vəʊˈkeɪʃənl/', definition: 'Thuộc về nghề nghiệp, hướng nghiệp', example: 'Vocational training prepares students for specific trades.' },
-                { word: 'specialise', pos: 'v', ipa: '/ˈspeʃəlaɪz/', definition: 'Chuyên môn hóa, chuyên về', example: 'He chose to specialise in computer science.' },
-            ],
-            'unit-6': [
-                { word: 'cuisine', pos: 'n', ipa: '/kwɪˈziːn/', definition: 'Ẩm thực, phong cách nấu ăn', example: 'Vietnamese cuisine is famous for its fresh ingredients.' },
-                { word: 'ingredient', pos: 'n', ipa: '/ɪnˈɡriːdiənt/', definition: 'Thành phần (trong món ăn)', example: 'Fresh herbs are key ingredients in many Asian dishes.' },
-                { word: 'flavour', pos: 'n', ipa: '/ˈfleɪvə(r)/', definition: 'Hương vị, mùi vị', example: 'The dish has a complex mix of sweet, sour, and salty flavours.' },
-                { word: 'delicacy', pos: 'n', ipa: '/ˈdelɪkəsi/', definition: 'Món ăn ngon, đặc sản', example: 'Pho is a renowned Vietnamese delicacy.' },
-                { word: 'appetiser', pos: 'n', ipa: '/ˈæpɪtaɪzə(r)/', definition: 'Món khai vị', example: 'We started the meal with a light appetiser.' },
-            ],
-            'unit-7': [
-                { word: 'employment', pos: 'n', ipa: '/ɪmˈplɔɪmənt/', definition: 'Việc làm, sự làm thuê', example: 'The company is committed to creating local employment opportunities.' },
-                { word: 'qualification', pos: 'n', ipa: '/ˌkwɒlɪfɪˈkeɪʃn/', definition: 'Trình độ chuyên môn, bằng cấp', example: 'Good qualifications are essential for this managerial role.' },
-                { word: 'soft skill', pos: 'n', ipa: '/ˌsɒft ˈskɪl/', definition: 'Kỹ năng mềm (giao tiếp, làm việc nhóm)', example: 'Employers highly value soft skills like teamwork and communication.' },
-                { word: 'redundancy', pos: 'n', ipa: '/rɪˈdʌndənsi/', definition: 'Sự dư thừa nhân viên, sự sa thải', example: 'The economic downturn led to a few redundancies at the factory.' },
-                { word: 'negotiate', pos: 'v', ipa: '/nɪˈɡəʊʃieɪt/', definition: 'Thương lượng, đàm phán', example: 'It is important to negotiate your salary before accepting the job.' },
-            ],
-            'unit-8': [
-                { word: 'journalism', pos: 'n', ipa: '/ˈdʒɜːnəlɪzəm/', definition: 'Nghề báo, báo chí', example: 'She studied journalism because she wanted to report the news.' },
-                { word: 'broadcast', pos: 'v/n', ipa: '/ˈbrɔːdkɑːst/', definition: 'Phát sóng, truyền hình', example: 'The speech was broadcast live on all major channels.' },
-                { word: 'misinformation', pos: 'n', ipa: '/ˌmɪsɪnfəˈmeɪʃn/', definition: 'Thông tin sai lệch', example: 'Social media platforms are struggling to combat misinformation.' },
-                { word: 'advertisement', pos: 'n', ipa: '/ədˈvɜːtɪsmənt/', definition: 'Quảng cáo', example: 'They launched a new advertisement campaign on television.' },
-                { word: 'subscriber', pos: 'n', ipa: '/səbˈskraɪbə(r)/', definition: 'Người đăng ký (theo dõi)', example: 'The YouTube channel reached one million subscribers last month.' },
-            ],
-            'unit-9': [
-                { word: 'disaster', pos: 'n', ipa: '/dɪˈzɑːstə(r)/', definition: 'Thảm họa, tai họa', example: 'The country recovered quickly after the natural disaster.' },
-                { word: 'evacuation', pos: 'n', ipa: '/ɪˌvækjuˈeɪʃn/', definition: 'Sự sơ tán', example: 'The police ordered an immediate evacuation of the coastal area.' },
-                { word: 'consequence', pos: 'n', ipa: '/ˈkɒnsɪkwəns/', definition: 'Hậu quả, kết quả', example: 'Rising sea levels are a direct consequence of climate change.' },
-                { word: 'relief efforts', pos: 'n', ipa: '/rɪˈliːf ˈefət/', definition: 'Các nỗ lực cứu trợ', example: 'International organisations contributed to the disaster relief efforts.' },
-                { word: 'seismic', pos: 'adj', ipa: '/ˈsaɪzmɪk/', definition: 'Thuộc về địa chấn', example: 'The region is known for its high seismic activity.' },
-            ],
-            'unit-10': [
-                { word: 'masterpiece', pos: 'n', ipa: '/ˈmɑːstərpiːs/', definition: 'Kiệt tác, tác phẩm lớn', example: 'The Mona Lisa is considered a masterpiece of Renaissance art.' },
-                { word: 'genre', pos: 'n', ipa: '/ˈʒɑːnrə/', definition: 'Thể loại (văn học, nghệ thuật)', example: 'His favourite literary genre is historical fiction.' },
-                { word: 'critic', pos: 'n', ipa: '/ˈkrɪtɪk/', definition: 'Nhà phê bình', example: 'Art critics praised the exhibition for its unique style.' },
-                { word: 'sculpture', pos: 'n', ipa: '/ˈskʌlptʃər/', definition: 'Tác phẩm điêu khắc', example: 'The museum acquired a new abstract sculpture.' },
-                { word: 'inspiration', pos: 'n', ipa: '/ˌɪnspəˈreɪʃn/', definition: 'Nguồn cảm hứng', example: 'Nature provided the artist with endless inspiration.' },
-            ],
-        };
-
+    <script>
+        // Start: Setup
         let currentUnit = 'unit-1';
-        let currentTab = 'flashcard'; // Tab mặc định
-        let currentFlashcardIndex = 0;
-        let currentQuizData = [];
-        let currentQuestionIndex = 0;
+        let currentCardIndex = 0;
+        let currentQuizWord = null;
+        let quizOptions = [];
         let score = 0;
-        let quizType = 'writing';
 
-        /**
-         * Chuyển đổi giữa các tab (Flashcard, List, Quiz).
-         * @param {string} tabName Tên tab ('flashcard', 'list', 'quiz')
-         */
-        function switchTab(tabName) {
-            currentTab = tabName;
-            const unitIndex = currentUnit.split('-')[1];
-
-            // 1. Cập nhật trạng thái nút tab
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.getAttribute('data-tab') === tabName) {
-                    btn.classList.add('active');
-                }
-            });
-
-            // 2. Ẩn/Hiện nội dung tab
-            document.querySelectorAll('.content-tab').forEach(content => {
-                content.classList.add('hidden');
-                if (content.getAttribute('data-tab-name') === tabName) {
-                    content.classList.remove('hidden');
-                }
-            });
-
-            // 3. Cập nhật tiêu đề và nội dung
-            let tabTitle = '';
-            switch (tabName) {
-                case 'flashcard':
-                    tabTitle = 'Thẻ từ (Flashcard)';
-                    displayFlashcard(currentFlashcardIndex);
-                    break;
-                case 'list':
-                    tabTitle = 'Danh sách từ vựng';
-                    displayVocabularyList();
-                    break;
-                case 'quiz':
-                    tabTitle = 'Ôn luyện & Kiểm tra';
-                    // Đảm bảo quiz được khởi tạo và hiển thị khu vực quiz
-                    initializeQuizDisplay();
-                    break;
-            }
-            document.getElementById('content-title').textContent = `Unit ${unitIndex}: ${tabTitle}`;
-        }
-        
-        /**
-         * Hàm chọn Unit (cập nhật trạng thái nút và hiển thị nội dung theo tab hiện tại)
-         */
-        function selectUnit(unitKey) {
-            currentUnit = unitKey;
-            document.querySelectorAll('.unit-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(unitKey).classList.add('active');
-            
-            // Hiển thị nội dung cho tab hiện tại của Unit mới
-            switchTab(currentTab);
-            currentFlashcardIndex = 0; // Reset Flashcard Index
-        }
-
-        // ------------------------------------
-        // CHẾ ĐỘ 1: FLASHCARD
-        // ------------------------------------
-
-        /**
-         * Hiển thị flashcard cụ thể dựa trên chỉ mục.
-         * @param {number} index Chỉ mục của từ vựng trong mảng
-         */
-        function displayFlashcard(index) {
-            const vocab = vocabularyData[currentUnit];
-            if (!vocab || index < 0 || index >= vocab.length) return;
-
-            currentFlashcardIndex = index;
-            const item = vocab[index];
-            const cardContainer = document.getElementById('current-flashcard');
-            const counter = document.getElementById('flashcard-counter');
-            const prevButton = document.getElementById('prev-flashcard');
-            const nextButton = document.getElementById('next-flashcard');
-
-            // Cập nhật thẻ
-            cardContainer.innerHTML = `
-                <div class="vocabulary-card" id="active-card">
-                    <!-- Mặt trước: Từ vựng -->
-                    <div id="front-card" class="text-center h-full flex flex-col justify-center items-center">
-                        <div class="flex items-end justify-center">
-                            <span class="text-4xl font-extrabold text-indigo-800">${item.word}</span>
-                            <span class="pos-tag">${item.pos}</span>
-                        </div>
-                        <p class="ipa">${item.ipa}</p>
-                        <p class="text-lg text-gray-500 italic mt-2">Nhấn vào thẻ để xem nghĩa</p>
-                        <i class="fas fa-volume-up text-2xl text-gray-500 cursor-pointer hover:text-indigo-700 mt-3" onclick="event.stopPropagation(); speakText('${item.word}')"></i>
-                    </div>
-                    
-                    <!-- Mặt sau: Định nghĩa và Ví dụ -->
-                    <div id="back-card">
-                        <div class="mb-4">
-                             <p class="text-xl font-extrabold text-indigo-800">${item.word} <span class="pos-tag">${item.pos}</span></p>
-                             <p class="ipa">${item.ipa}</p>
-                        </div>
-                        <p class="text-lg mb-2"><span class="font-bold text-emerald-700">Nghĩa:</span> ${item.definition}</p>
-                        <p class="text-sm text-gray-600 italic"><span class="font-semibold text-emerald-700">Ví dụ:</span> ${item.example}</p>
-                    </div>
-                </div>
-            `;
-            
-            // Gắn sự kiện lật thẻ
-            document.getElementById('active-card').onclick = flipCard;
-
-            // Cập nhật bộ đếm
-            counter.textContent = `${index + 1} / ${vocab.length}`;
-
-            // Vô hiệu hóa nút
-            prevButton.disabled = (index === 0);
-            nextButton.disabled = (index === vocab.length - 1);
-        }
-
-        /**
-         * Lật thẻ Flashcard
-         */
-        window.flipCard = function() {
-            const card = document.getElementById('active-card');
-            if (card) {
-                const isFlipped = card.style.transform === 'rotateY(180deg)';
-                card.style.transform = isFlipped ? 'rotateY(0deg)' : 'rotateY(180deg)';
-            }
-        }
-
-        /**
-         * Chức năng phát âm (TTS)
-         * @param {string} text Nội dung cần đọc
-         */
-        window.speakText = function(text) {
+        // NEW: TTS FUNCTION (Google TTS style using Web Speech API)
+        function speakWord(word) {
             if ('speechSynthesis' in window) {
-                const speech = new SpeechSynthesisUtterance(text);
-                speech.lang = 'en-US'; // Đặt ngôn ngữ là Tiếng Anh
-                speech.rate = 0.9; // Tốc độ đọc
-                speechSynthesis.speak(speech);
+                // Hủy bỏ phát âm trước đó nếu có
+                window.speechSynthesis.cancel(); 
+                
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US'; // Đặt ngôn ngữ là Tiếng Anh
+                utterance.pitch = 1;      // Độ cao
+                utterance.rate = 1;       // Tốc độ
+                window.speechSynthesis.speak(utterance);
             } else {
-                console.error("Trình duyệt không hỗ trợ Web Speech API.");
+                console.warn('Web Speech API (Text-to-Speech) is not supported in this browser.');
+                alert('Trình duyệt của bạn không hỗ trợ phát âm từ vựng (TTS).');
             }
-        };
-
-        // ------------------------------------
-        // CHẾ ĐỘ 2: DANH SÁCH TỪ VỰNG
-        // ------------------------------------
-
-        /**
-         * Hiển thị danh sách từ vựng dưới dạng bảng.
-         */
-        function displayVocabularyList() {
-            const vocab = vocabularyData[currentUnit];
-            const listBody = document.getElementById('vocabulary-list-body');
-            listBody.innerHTML = ''; // Xóa nội dung cũ
-
-            vocab.forEach((item, index) => {
-                const row = document.createElement('tr');
-                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <div class="flex items-center">
-                            <i class="fas fa-volume-up text-sm text-blue-500 cursor-pointer hover:text-blue-700 mr-2" onclick="speakText('${item.word}')"></i>
-                            <span>${item.word}</span>
-                        </div>
-                    </td>
-                    <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-600 hidden sm:table-cell">
-                        <span class="font-mono text-xs">${item.ipa}</span><br/>
-                        <span class="pos-tag">${item.pos}</span>
-                    </td>
-                    <td class="px-3 py-3 text-sm text-gray-700">
-                        ${item.definition}
-                    </td>
-                `;
-                listBody.appendChild(row);
-            });
         }
+        // END TTS FUNCTION
 
-        // ------------------------------------
-        // CHẾ ĐỘ 3: QUIZ (Tái sử dụng code cũ)
-        // ------------------------------------
 
-        /**
-         * Thiết lập trạng thái hiển thị ban đầu cho Quiz
-         */
-        function initializeQuizDisplay() {
-            // Tạm thời khởi động quiz writing để thiết lập UI
-            startQuiz('writing', true); 
-        }
+        // NEW VOCABULARY DATA (DỮ LIỆU TỪ VỰNG KHÔNG ĐỔI)
+        // ====================================================================================================
+        // Data: Vocabulary for each unit (word, pos, ipa, definition, example)
+        const vocabularyData = {
+            // UNIT 1 - FAMILY LIFE
+            'unit-1': [
+                { word: 'Benefit', pos: 'n', ipa: '/ˈbenɪfɪt/', definition: 'Lợi ích', example: 'Regular exercise has many health benefits.' },
+                { word: 'Bond', pos: 'n', ipa: '/bɒnd/', definition: 'Sự gắn bó', example: 'A strong family bond is important.' },
+                { word: 'Breadwinner', pos: 'n', ipa: '/ˈbredwɪnə(r)/', definition: 'Người trụ cột đi làm nuôi gia đình', example: 'My father is the breadwinner in our family.' },
+                { word: 'Character', pos: 'n', ipa: '/ˈkærəktə(r)/', definition: 'Tính cách', example: 'She has a strong character.' },
+                { word: 'Cheer up', pos: 'v', ipa: '/tʃɪər ʌp/', definition: 'Cổ vũ, làm vui lên', example: 'I tried to cheer up my little sister.' },
+                { word: 'Damage', pos: 'v', ipa: '/ˈdæmɪdʒ/', definition: 'Làm hỏng', example: 'The fire damaged the old house.' },
+                { word: 'Gratitude', pos: 'n', ipa: '/ˈɡrætɪtjuːd/', definition: 'Lòng biết ơn', example: 'I showed my gratitude with a thank-you note.' },
+                { word: 'Grocery', pos: 'n', ipa: '/ˈɡrəʊsəri/', definition: 'Thực phẩm, tạp hoá', example: 'We need to buy groceries for the week.' },
+                { word: 'Heavy lifting', pos: 'n', ipa: '/ˌhevi ˈlɪftɪŋ/', definition: 'Mang vác nặng', example: 'My brother helps me with the heavy lifting.' },
+                { word: 'Homemaker', pos: 'n', ipa: '/ˈhəʊmmeɪkə(r)/', definition: 'Người nội trợ', example: 'She decided to be a full-time homemaker.' },
+                { word: 'Laundry', pos: 'n', ipa: '/ˈlɔːndri/', definition: 'Quần áo, đồ giặt', example: 'I do the laundry every Saturday.' },
+                { word: 'Manner', pos: 'n', ipa: '/ˈmænə(r)/', definition: 'Cách cư xử', example: 'Good manners are important in society.' },
+                { word: 'Responsibility', pos: 'n', ipa: '/rɪˌspɒnsəˈbɪləti/', definition: 'Trách nhiệm', example: 'Taking care of the dog is my responsibility.' },
+                { word: 'Routine', pos: 'n', ipa: '/ruːˈtiːn/', definition: 'Thói quen hằng ngày', example: 'I follow a strict daily routine.' },
+                { word: 'Rubbish', pos: 'n', ipa: '/ˈrʌbɪʃ/', definition: 'Rác', example: 'Please take out the rubbish.' },
+                { word: 'Spotlessly', pos: 'adv', ipa: '/ˈspɒtləsli/', definition: 'Sạch không tì vết', example: 'The kitchen was spotlessly clean.' },
+                { word: 'Strengthen', pos: 'v', ipa: '/ˈstreŋθn/', definition: 'Củng cố', example: 'Regular practice will strengthen your skills.' },
+                { word: 'Support', pos: 'n,v', ipa: '/səˈpɔːt/', definition: 'Sự ủng hộ, ủng hộ', example: 'The family offers great emotional support.' },
+                { word: 'Washing-up', pos: 'n', ipa: '/ˌwɒʃɪŋ ˈʌp/', definition: 'Việc rửa bát', example: 'My sister always helps with the washing-up.' }
+            ],
+            // UNIT 2 - CLOTHING
+            'unit-2': [
+                { word: 'Casual', pos: 'adj', ipa: '/ˈkæʒuəl/', definition: 'Thông thường, bình thường', example: 'She prefers casual clothes on the weekends.' },
+                { word: 'Complicated', pos: 'adj', ipa: '/ˈkɒmplɪkeɪtɪd/', definition: 'Phức tạp', example: 'The process of making this silk is complicated.' },
+                { word: 'Design', pos: 'v', ipa: '/dɪˈzaɪn/', definition: 'Thiết kế', example: 'He designed a new type of modern dress.' },
+                { word: 'Fashionable', pos: 'adj', ipa: '/ˈfæʃnəbl/', definition: 'Hợp thời trang', example: 'She always wears fashionable clothes.' },
+                { word: 'Fit', pos: 'v', ipa: '/fɪt/', definition: 'Vừa vặn', example: 'These shoes fit me perfectly.' },
+                { word: 'Folk', pos: 'adj', ipa: '/fəʊk/', definition: 'Dân tộc, dân gian', example: 'She bought a folk costume from the market.' },
+                { word: 'Material', pos: 'n', ipa: '/məˈtɪəriəl/', definition: 'Chất liệu, vật liệu', example: 'Cotton is a soft material.' },
+                { word: 'Modesty', pos: 'n', ipa: '/ˈmɒdəsti/', definition: 'Sự khiêm tốn', example: 'She wore her traditional clothes with modesty.' },
+                { word: 'Pattern', pos: 'n', ipa: '/ˈpætən/', definition: 'Hoạ tiết, mẫu vẽ', example: 'The shirt has a lovely flower pattern.' },
+                { word: 'Practical', pos: 'adj', ipa: '/ˈpræktɪkl/', definition: 'Thực tế', example: 'A uniform is practical for students.' },
+                { word: 'Style', pos: 'n', ipa: '/staɪl/', definition: 'Kiểu dáng, phong cách', example: 'I like her modern style of dressing.' },
+                { word: 'Symbol', pos: 'n', ipa: '/ˈsɪmbl/', definition: 'Biểu tượng', example: 'The dove is a symbol of peace.' },
+                { word: 'Trend', pos: 'n', ipa: '/trend/', definition: 'Xu hướng', example: 'Short skirts are the latest trend this summer.' },
+                { word: 'Traditional', pos: 'adj', ipa: '/trəˈdɪʃənl/', definition: 'Truyền thống', example: 'The Ao Dai is the Vietnamese traditional dress.' },
+                { word: 'Unique', pos: 'adj', ipa: '/juːˈniːk/', definition: 'Độc đáo', example: 'Each culture has its own unique clothing.' }
+            ],
+            // UNIT 3 - MUSIC
+            'unit-3': [
+                { word: 'Bamboo clapper', pos: 'n', ipa: '/ˌbæmbuː ˈklæpə(r)/', definition: 'Phách tre', example: 'The traditional band uses a bamboo clapper for rhythm.' },
+                { word: 'Comment', pos: 'n', ipa: '/ˈkɒment/', definition: 'Bình luận', example: 'The singer read all the comments on her video.' },
+                { word: 'Competition', pos: 'n', ipa: '/ˌkɒmpəˈtɪʃn/', definition: 'Cuộc thi', example: 'She won the singing competition.' },
+                { word: 'Concert', pos: 'n', ipa: '/ˈkɒnsət/', definition: 'Buổi hoà nhạc', example: 'We bought tickets for the rock concert.' },
+                { word: 'Composer', pos: 'n', ipa: '/kəmˈpəʊzə(r)/', definition: 'Nhà soạn nhạc', example: 'Beethoven was a famous German composer.' },
+                { word: 'Cultural', pos: 'adj', ipa: '/ˈkʌltʃərəl/', definition: 'Thuộc về văn hoá', example: 'The show highlights the cultural heritage of the area.' },
+                { word: 'Dislike', pos: 'v', ipa: '/dɪsˈlaɪk/', definition: 'Không thích', example: 'Many people dislike very loud music.' },
+                { word: 'Famous', pos: 'adj', 'ipa': '/ˈfeɪməs/', definition: 'Nổi tiếng', example: 'He is famous for his beautiful songs.' },
+                { word: 'Genre', pos: 'n', ipa: '/ˈʒɑːnrə/', definition: 'Thể loại', example: 'What is your favorite music genre?' },
+                { word: 'Instrument', pos: 'n', ipa: '/ˈɪnstrəmənt/', definition: 'Nhạc cụ', example: 'The guitar is a popular musical instrument.' },
+                { word: 'Melody', pos: 'n', ipa: '/ˈmelədi/', definition: 'Giai điệu', example: 'The song has a simple, beautiful melody.' },
+                { word: 'Performance', pos: 'n', ipa: '/pəˈfɔːməns/', definition: 'Buổi biểu diễn', example: 'The band gave a great performance last night.' },
+                { word: 'Popular', pos: 'adj', ipa: '/ˈpɒpjələ(r)/', definition: 'Phổ biến', example: 'Pop music is very popular among teenagers.' },
+                { word: 'Record', pos: 'v', ipa: '/rɪˈkɔːd/', definition: 'Thu âm', example: 'She is recording her new album.' },
+                { word: 'Rhythm', pos: 'n', ipa: '/ˈrɪðəm/', definition: 'Nhịp điệu', example: 'The drummer keeps a steady rhythm.' },
+                { word: 'Talent', pos: 'n', ipa: '/ˈtælənt/', definition: 'Tài năng', example: 'She has a natural talent for singing.' },
+                { word: 'Unique', pos: 'adj', ipa: '/juːˈniːk/', definition: 'Độc đáo', example: 'Vietnamese folk music has a unique sound.' }
+            ],
+            // UNIT 4 - SPECIAL FOODS
+            'unit-4': [
+                { word: 'Attractive', pos: 'adj', ipa: '/əˈtræktɪv/', definition: 'Hấp dẫn', example: 'The colourful dish was very attractive.' },
+                { word: 'Boil', pos: 'v', ipa: '/bɔɪl/', definition: 'Luộc', example: 'Boil the eggs for ten minutes.' },
+                { word: 'Delicious', pos: 'adj', ipa: '/dɪˈlɪʃəs/', definition: 'Ngon, thơm ngon', example: 'The soup smells delicious.' },
+                { word: 'Dish', pos: 'n', ipa: '/dɪʃ/', definition: 'Món ăn', example: 'Pho is a traditional Vietnamese dish.' },
+                { word: 'Fry', pos: 'v', ipa: '/fraɪ/', definition: 'Chiên, rán', example: 'Fry the onions until they are golden brown.' },
+                { word: 'Grill', pos: 'v', ipa: '/ɡrɪl/', definition: 'Nướng', example: 'We are going to grill some fish for dinner.' },
+                { word: 'Healthy', pos: 'adj', ipa: '/ˈhelθi/', definition: 'Lành mạnh', example: 'Eating vegetables is very healthy.' },
+                { word: 'Ingredient', pos: 'n', ipa: '/ɪnˈɡriːdiənt/', definition: 'Thành phần', example: 'Garlic is a key ingredient in this recipe.' },
+                { word: 'Nutritious', pos: 'adj', ipa: '/njuːˈtrɪʃəs/', definition: 'Bổ dưỡng', example: 'Brown rice is more nutritious than white rice.' },
+                { word: 'Popular', pos: 'adj', ipa: '/ˈpɒpjələ(r)/', definition: 'Phổ biến', example: 'Pizza is popular all over the world.' },
+                { word: 'Recipe', pos: 'n', ipa: '/ˈresəpi/', definition: 'Công thức nấu ăn', example: 'She gave me the recipe for her famous cake.' },
+                { word: 'Serve', pos: 'v', ipa: '/sɜːv/', definition: 'Phục vụ, dọn ra', example: 'Serve the meal while it is still hot.' },
+                { word: 'Slice', pos: 'v', ipa: '/slaɪs/', definition: 'Cắt lát', example: 'Slice the bread thinly.' },
+                { word: 'Taste', pos: 'v, n', ipa: '/teɪst/', definition: 'Nếm, vị', example: 'The cake tastes sweet.' },
+                { word: 'Traditional', pos: 'adj', ipa: '/trəˈdɪʃənl/', definition: 'Truyền thống', example: 'We only serve traditional food at the festival.' }
+            ],
+            // UNIT 5 - OUR HERITAGE
+            'unit-5': [
+                { word: 'Ancient', pos: 'adj', ipa: '/ˈeɪnʃənt/', definition: 'Cổ xưa', example: 'We visited an ancient temple.' },
+                { word: 'Artifact', pos: 'n', ipa: '/ˈɑːtɪfækt/', definition: 'Hiện vật', example: 'Many valuable artifacts were found at the site.' },
+                { word: 'Citadel', pos: 'n', ipa: '/ˈsɪtədel/', definition: 'Thành trì', example: 'The imperial citadel is a must-see.' },
+                { word: 'Complex', pos: 'n', ipa: '/ˈkɒmpleks/', definition: 'Quần thể', example: 'They are building a new sports complex.' },
+                { word: 'Dynasty', pos: 'n', ipa: '/ˈdɪnəsti/', definition: 'Triều đại', example: 'The Nguyen Dynasty was the last dynasty of Vietnam.' },
+                { word: 'Emperor', pos: 'n', ipa: '/ˈempərə(r)/', definition: 'Hoàng đế', example: 'The tomb was built for an ancient emperor.' },
+                { word: 'Excavate', pos: 'v', ipa: '/ˈekskəveɪt/', definition: 'Khai quật', example: 'Archaeologists will excavate the site next month.' },
+                { word: 'Feature', pos: 'n', ipa: '/ˈfiːtʃə(r)/', definition: 'Nét đặc trưng', example: 'A unique feature of the temple is its stone carving.' },
+                { word: 'Historic', pos: 'adj', ipa: '/hɪˈstɒrɪk/', definition: 'Có tính lịch sử', example: 'The battle took place at a historic location.' },
+                { word: 'Heritage', pos: 'n', ipa: '/ˈherɪtɪdʒ/', definition: 'Di sản', example: 'Ha Long Bay is a world natural heritage site.' },
+                { word: 'Imperial', pos: 'adj', ipa: '/ɪmˈpɪəriəl/', definition: 'Thuộc về hoàng đế/triều đình', example: 'The imperial palace is well preserved.' },
+                { word: 'Monument', pos: 'n', ipa: '/ˈmɒnjumənt/', definition: 'Đài tưởng niệm', example: 'There is a monument to the war heroes in the park.' },
+                { word: 'Preserve', pos: 'v', ipa: '/prɪˈzɜːv/', definition: 'Bảo tồn', example: 'We must work to preserve our cultural heritage.' },
+                { word: 'Relic', pos: 'n', ipa: '/ˈrelɪk/', definition: 'Di tích, thánh tích', example: 'The museum has many religious relics.' },
+                { word: 'Ruin', pos: 'n', ipa: '/ˈruːɪn/', definition: 'Tàn tích', example: 'We explored the ruins of the old castle.' }
+            ],
+            // UNIT 6 - GENDER EQUALITY
+            'unit-6': [
+                { word: 'Access', pos: 'n', ipa: '/ˈækses/', definition: 'Sự tiếp cận', example: 'Everyone should have equal access to education.' },
+                { word: 'Discrimination', pos: 'n', ipa: '/dɪˌskrɪmɪˈneɪʃn/', definition: 'Sự phân biệt đối xử', example: 'Gender discrimination is illegal in most countries.' },
+                { word: 'Eliminate', pos: 'v', ipa: '/ɪˈlɪmɪneɪt/', definition: 'Loại bỏ', example: 'We need to eliminate all forms of prejudice.' },
+                { word: 'Empowerment', pos: 'n', ipa: '/ɪmˈpaʊəmənt/', definition: 'Sự trao quyền', example: 'Education leads to women’s empowerment.' },
+                { word: 'Equal', pos: 'adj', ipa: '/ˈiːkwəl/', definition: 'Bình đẳng', example: 'Men and women deserve equal rights.' },
+                { word: 'Gender', pos: 'n', ipa: '/ˈdʒendə(r)/', definition: 'Giới tính', example: 'What gender is the new baby?' },
+                { word: 'Income', pos: 'n', ipa: '/ˈɪnkʌm/', definition: 'Thu nhập', example: 'She earns a high income as a lawyer.' },
+                { word: 'Opportunity', pos: 'n', ipa: '/ˌɒpəˈtjuːnəti/', definition: 'Cơ hội', example: 'He was given the opportunity to study abroad.' },
+                { word: 'Pay gap', pos: 'n', ipa: '/ˈpeɪ ɡæp/', definition: 'Khoảng cách về lương', example: 'The gender pay gap is a worldwide issue.' },
+                { word: 'Patriarchy', pos: 'n', ipa: '/ˈpeɪtriɑːki/', definition: 'Chế độ phụ hệ, gia trưởng', example: 'We still live in a largely patriarchy society.' },
+                { word: 'Right', pos: 'n', ipa: '/raɪt/', definition: 'Quyền lợi', example: 'All citizens have the right to vote.' },
+                { word: 'Sex', pos: 'n', ipa: '/seks/', definition: 'Giới tính sinh học', example: 'The form asks for the applicant’s name and sex.' },
+                { word: 'Stereotype', pos: 'n', ipa: '/ˈsteriətaɪp/', definition: 'Khuôn mẫu, định kiến', example: 'We should break the gender stereotype.' },
+                { word: 'Violence', pos: 'n', ipa: '/ˈvaɪələns/', definition: 'Bạo lực', example: 'Domestic violence is a serious crime.' },
+                { word: 'Workforce', pos: 'n', ipa: '/ˈwɜːkfɔːs/', definition: 'Lực lượng lao động', example: 'More women are joining the workforce.' }
+            ],
+            // UNIT 7 - ECONOMIC REFORMS IN VIET NAM
+            'unit-7': [
+                { word: 'Capital', pos: 'n', ipa: '/ˈkæpɪtl/', definition: 'Vốn', example: 'The company needs more capital to expand.' },
+                { word: 'Development', pos: 'n', ipa: '/dɪˈveləpmənt/', definition: 'Sự phát triển', example: 'Economic development is a priority.' },
+                { word: 'Economic', pos: 'adj', ipa: '/ˌiːkəˈnɒmɪk/', definition: 'Thuộc về kinh tế', example: 'The country faced a severe economic crisis.' },
+                { word: 'Enterprises', pos: 'n', ipa: '/ˈentəpraɪzɪz/', definition: 'Doanh nghiệp', example: 'Small and medium enterprises are important.' },
+                { word: 'Export', pos: 'v', ipa: '/ɪkˈspɔːt/', definition: 'Xuất khẩu', example: 'Viet Nam exports rice to many countries.' },
+                { word: 'Foreign', pos: 'adj', ipa: '/ˈfɒrən/', definition: 'Nước ngoài', example: 'They receive a lot of foreign investment.' },
+                { word: 'Growth', pos: 'n', ipa: '/ɡrəʊθ/', definition: 'Sự tăng trưởng', example: 'The economy has shown strong growth.' },
+                { word: 'Import', pos: 'v', ipa: '/ɪmˈpɔːt/', definition: 'Nhập khẩu', example: 'We import coffee from South America.' },
+                { word: 'Inflation', pos: 'n', ipa: '/ɪnˈfleɪʃn/', definition: 'Lạm phát', example: 'High inflation is a concern for the government.' },
+                { word: 'Market', pos: 'n', ipa: '/ˈmɑːkɪt/', definition: 'Thị trường', example: 'They are expanding into the European market.' },
+                { word: 'Private', pos: 'adj', ipa: '/ˈpraɪvət/', definition: 'Tư nhân', example: 'The reform encouraged the private sector.' },
+                { word: 'Production', pos: 'n', ipa: '/prəˈdʌkʃn/', definition: 'Sản xuất', example: 'Car production has increased this year.' },
+                { word: 'Reform', pos: 'n', ipa: '/rɪˈfɔːm/', definition: 'Cải cách', example: 'The government introduced a major tax reform.' },
+                { word: 'Stable', pos: 'adj', ipa: '/ˈsteɪbl/', definition: 'Ổn định', example: 'The country needs a stable political situation.' },
+                { word: 'Trade', pos: 'n', ipa: '/treɪd/', definition: 'Thương mại', example: 'International trade is important for the economy.' }
+            ],
+            // UNIT 8 - TOURISM
+            'unit-8': [
+                { word: 'Accommodation', pos: 'n', ipa: '/əˌkɒməˈdeɪʃn/', definition: 'Chỗ ở', example: 'We are looking for cheap accommodation near the beach.' },
+                { word: 'Attraction', pos: 'n', ipa: '/əˈtrækʃn/', definition: 'Điểm thu hút', example: 'Ha Long Bay is a major tourist attraction.' },
+                { word: 'Backpacking', pos: 'n', ipa: '/ˈbækpækɪŋ/', definition: 'Du lịch ba lô (bụi)', example: 'Backpacking across Europe is a popular activity.' },
+                { word: 'Climate', pos: 'n', ipa: '/ˈklaɪmət/', definition: 'Khí hậu', example: 'The tropical climate is very hot and humid.' },
+                { word: 'Culture', pos: 'n', ipa: '/ˈkʌltʃə(r)/', definition: 'Văn hóa', example: 'She is interested in learning about foreign culture.' },
+                { word: 'Ecotourism', pos: 'n', ipa: '/ˈiːkəʊtʊərɪzəm/', definition: 'Du lịch sinh thái', example: 'Ecotourism aims to protect natural areas.' },
+                { word: 'Exotic', pos: 'adj', ipa: '/ɪɡˈzɒtɪk/', definition: 'Kỳ lạ, độc đáo', example: 'They serve a lot of exotic fruit drinks.' },
+                { word: 'Facility', pos: 'n', ipa: '/fəˈsɪləti/', definition: 'Cơ sở vật chất', example: 'The hotel has excellent sports facilities.' },
+                { word: 'Historical', pos: 'adj', ipa: '/hɪˈstɒrɪkl/', definition: 'Thuộc về lịch sử', example: 'We visited several historical sites in the city.' },
+                { word: 'Package tour', pos: 'n', ipa: '/ˈpækɪdʒ tʊə(r)/', definition: 'Chuyến du lịch trọn gói', example: 'A package tour includes flights and accommodation.' },
+                { word: 'Resort', pos: 'n', ipa: '/rɪˈzɔːt/', definition: 'Khu nghỉ dưỡng', example: 'We stayed at a luxury resort by the sea.' },
+                { word: 'Sightseeing', pos: 'n', ipa: '/ˈsaɪtsiːɪŋ/', definition: 'Tham quan', example: 'We spent the afternoon sightseeing.' },
+                { word: 'Sustainable', pos: 'adj', ipa: '/səˈsteɪnəbl/', definition: 'Bền vững', example: 'Sustainable tourism helps local communities.' },
+                { word: 'Tourist', pos: 'n', ipa: '/ˈtʊərɪst/', definition: 'Khách du lịch', example: 'The city attracts millions of tourists every year.' },
+                { word: 'Visa', pos: 'n', ipa: '/ˈviːzə/', definition: 'Thị thực', example: 'You need a visa to enter that country.' }
+            ],
+            // UNIT 9 - PROTECTING THE ENVIRONMENT
+            'unit-9': [
+                { word: 'Air pollution', pos: 'n', ipa: '/ˈeə pəluːʃn/', definition: 'Ô nhiễm không khí', example: 'Air pollution is a major problem in big cities.' },
+                { word: 'Climate change', pos: 'n', ipa: '/ˈklaɪmət tʃeɪndʒ/', definition: 'Biến đổi khí hậu', example: 'Climate change is affecting weather patterns.' },
+                { word: 'Conservation', pos: 'n', ipa: '/ˌkɒnsəˈveɪʃn/', definition: 'Sự bảo tồn', example: 'Wildlife conservation is very important.' },
+                { word: 'Deforestation', pos: 'n', ipa: '/ˌdiːfɒrɪˈsteɪʃn/', definition: 'Phá rừng', example: 'Deforestation leads to soil erosion.' },
+                { word: 'Ecosystem', pos: 'n', ipa: '/ˈiːkəʊsɪstəm/', definition: 'Hệ sinh thái', example: 'The coral reef is a fragile ecosystem.' },
+                { word: 'Environment', pos: 'n', ipa: '/ɪnˈvaɪrənmənt/', definition: 'Môi trường', example: 'We must protect the natural environment.' },
+                { word: 'Fossil fuel', pos: 'n', ipa: '/ˈfɒsl fjuːəl/', definition: 'Nhiên liệu hoá thạch', example: 'Burning fossil fuels causes air pollution.' },
+                { word: 'Global warming', pos: 'n', ipa: '/ˌɡləʊbl ˈwɔːmɪŋ/', definition: 'Sự nóng lên toàn cầu', example: 'Global warming is increasing sea levels.' },
+                { word: 'Habitat', pos: 'n', ipa: '/ˈhæbɪtæt/', definition: 'Môi trường sống', example: 'The forest is the natural habitat of many animals.' },
+                { word: 'Litter', pos: 'n', ipa: '/ˈlɪtə(r)/', definition: 'Rác thải', example: 'Please don’t drop litter in the street.' },
+                { word: 'Recycle', pos: 'v', ipa: '/ˌriːˈsaɪkl/', definition: 'Tái chế', example: 'We should recycle all plastic bottles.' },
+                { word: 'Renewable', pos: 'adj', ipa: '/rɪˈnjuːəbl/', definition: 'Có thể tái tạo', example: 'Solar power is a renewable energy source.' },
+                { word: 'Threat', pos: 'n', ipa: '/θret/', definition: 'Mối đe dọa', example: 'Pollution poses a threat to public health.' },
+                { word: 'Toxic', pos: 'adj', ipa: '/ˈtɒksɪk/', definition: 'Độc hại', example: 'Toxic chemicals were dumped into the river.' },
+                { word: 'Waste', pos: 'n', ipa: '/weɪst/', definition: 'Chất thải', example: 'The factory produces a lot of industrial waste.' }
+            ],
+            // UNIT 10 - COMMUNITY SERVICES
+            'unit-10': [
+                { word: 'Campaign', pos: 'n', ipa: '/kæmˈpeɪn/', definition: 'Chiến dịch', example: 'They launched a campaign to clean up the park.' },
+                { word: 'Community', pos: 'n', ipa: '/kəˈmjuːnəti/', definition: 'Cộng đồng', example: 'She works hard for her local community.' },
+                { word: 'Volunteer', pos: 'v, n', ipa: '/ˌvɒlənˈtɪə(r)/', definition: 'Tình nguyện, người tình nguyện', example: 'I volunteer at the hospital every week.' },
+                { word: 'Charity', pos: 'n', ipa: '/ˈtʃærəti/', definition: 'Từ thiện', example: 'We donated money to a children\'s charity.' },
+                { word: 'Support', pos: 'v, n', ipa: '/səˈpɔːt/', definition: 'Ủng hộ, sự ủng hộ', example: 'The school offers great support to students.' },
+                { word: 'Benefit', pos: 'v, n', ipa: '/ˈbenɪfɪt/', definition: 'Có lợi, lợi ích', example: 'This program will benefit the whole town.' } 
+            ]
+        }; 
+        // ====================================================================================================
 
-        /**
-         * Xáo trộn mảng (Fisher-Yates)
-         * @param {Array} array Mảng cần xáo trộn
-         * @returns {Array} Mảng đã xáo trộn
-         */
+        // Global constants for Practice Tabs
+        const MAX_AUDIO_HUNT_ROUNDS = 10;
+        let audioHuntRounds = [];
+        let audioHuntRound = 1;
+        let audioHuntScore = 0;
+        let audioHuntTimerInterval;
+        let currentCorrectWord = '';
+        let isFirstTry = true;
+        
+        const MAX_BLANK_ROUNDS = 10;
+        let blankQuizRounds = [];
+        let blankCurrentRound = 0;
+        let blankScore = 0;
+        let blankCorrectWord = '';
+
+
+        // DOM elements
+        const unitButtons = document.querySelectorAll('.unit-button');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Flashcard elements
+        const cardContainer = document.getElementById('flashcard');
+        const flipBtn = document.getElementById('flip-card-btn');
+        const prevBtn = document.getElementById('prev-card-btn');
+        const nextBtn = document.getElementById('next-card-btn');
+        const cardWord = document.getElementById('card-word');
+        const cardPos = document.getElementById('card-pos');
+        const cardIPAFront = document.getElementById('card-ipa-front');
+        const cardDefinition = document.getElementById('card-definition');
+        const cardIPA = document.getElementById('card-ipa');
+        const cardExample = document.getElementById('card-example');
+        const cardCounter = document.getElementById('card-counter');
+
+        // Quiz elements
+        const quizQuestionEl = document.getElementById('quiz-question');
+        const quizOptionsEl = document.getElementById('quiz-options');
+        const quizNextBtn = document.getElementById('quiz-next-btn');
+        const quizMessageEl = document.getElementById('quiz-message');
+
+        // Matching Game elements
+        let shuffledEnglish = [];
+        let shuffledVietnamese = [];
+        let currentMatch = {};
+        let selectedCard = null;
+        let matchGameState = 'playing';
+        const englishColMatch = document.getElementById('english-col-match');
+        const vietnameseColMatch = document.getElementById('vietnamese-col-match');
+        const checkBtnMatch = document.getElementById('check-btn-match');
+        const resetBtnMatch = document.getElementById('reset-btn-match');
+        const matchMessageBox = document.getElementById('match-message-box');
+
+        // Audio Hunt elements
+        const audioHuntSpeaker = document.getElementById('audioHuntSpeaker');
+        const audioHuntScoreEl = document.getElementById('audioHuntScore');
+        const audioHuntRoundEl = document.getElementById('audioHuntRound');
+        const audioHuntTimerEl = document.getElementById('audioHuntTimer');
+        const audioHuntMessageEl = document.getElementById('audioHuntMessage');
+        const audioHuntWordGrid = document.getElementById('audioHuntWordGrid');
+        const audioHuntGameover = document.getElementById('audioHuntGameover');
+        const audioHuntFinalScore = document.getElementById('audioHuntFinalScore');
+
+        // Fill in Blanks elements
+        const blankSentenceEl = document.getElementById('blank-sentence');
+        const blankInputEl = document.getElementById('blank-input');
+        const blankCheckBtn = document.getElementById('blank-check-btn');
+        const blankNextBtn = document.getElementById('blank-next-btn');
+        const blankMessageEl = document.getElementById('blank-message');
+        const blankScoreEl = document.getElementById('blank-score');
+        const blankProgressEl = document.getElementById('blank-progress');
+
+        // Word Puzzle (Tetris/Falling Letters) elements
+        const gameArea = document.getElementById("gameArea-word-puzzle"); 
+        const dropZone = document.getElementById("dropZone-word-puzzle"); 
+        const message = document.getElementById("message-word-puzzle"); 
+        const resetBtn = document.getElementById("resetBtn-word-puzzle"); 
+        const info = document.getElementById("info-word-puzzle"); 
+        const checkBtnWordPuzzle = document.getElementById("checkBtn-word-puzzle");
+        const dropSound = document.getElementById("dropSound");
+        const successSound = document.getElementById("successSound");
+        let currentWordPuzzle = {};
+        const colors = ["#FF5733","#33CFFF","#FF33A6","#33FF57","#FF8F33","#8F33FF","#33FFD7","#FFD733"];
+        
+        // NEW: Game Constants & State for Tetris
+        const GRID_WIDTH = 10;
+        const GRID_HEIGHT = 10;
+        const DROP_INTERVAL = 200; // Updated to 200ms
+        const distractorLetters = 'EAIOTNRSLDCMFPHGVUYWBKXZQJ'; // Added more letters for noise
+
+        let currentBlock = null; // {letter: 'A', x: 4, y: 0, color: '#...', isRequired: true}
+        let currentWordLetters = []; // List of required letters
+        let requiredLettersIndex = 0; // Index to track the next required letter to spawn
+        let lockedBlocks = []; // Array of locked block objects: {id: 1, letter: 'A', x: 4, y: 9, color: '#...', isUsed: false, isRequired: true}
+        let blockIdCounter = 0; // To give unique ID to each locked block
+        let wordPuzzleInterval;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+
+        // Hàm Utility function
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -558,274 +786,1322 @@
             return array;
         }
 
-        /**
-         * Bắt đầu Quiz
-         * @param {string} newQuizType Loại quiz ('writing' hoặc 'multiple-choice')
-         * @param {boolean} isInitialSetup Có phải là thiết lập ban đầu không
-         */
-        function startQuiz(newQuizType, isInitialSetup = false) {
-            quizType = newQuizType;
-            currentQuizData = shuffleArray([...vocabularyData[currentUnit]]);
-            currentQuestionIndex = 0;
-            score = 0;
+        // Hàm chung
+        function selectUnit(unitId) {
+            currentUnit = unitId;
+            currentCardIndex = 0;
+            const unitName = `UNIT ${unitId.split('-')[1]} - ${getUnitTitle(unitId)}`;
+            document.getElementById('unit-title').textContent = unitName;
+            unitButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.unit === unitId) {
+                    btn.classList.add('active');
+                }
+            });
+            // Tải lại nội dung tab hiện tại khi đổi Unit
+            const activeTab = document.querySelector('.tab-button.active');
+            if (activeTab) {
+                switchTab(activeTab.dataset.tab);
+            } else {
+                // Mặc định chọn Flashcard
+                switchTab('flashcard');
+            }
+        }
 
-            // Cập nhật tiêu đề và tổng số câu hỏi
-            document.getElementById('quiz-type-title').textContent = quizType === 'writing' ? 'Quiz: Viết Từ (Anh → Việt)' : 'Quiz: Trắc Nghiệm (Việt → Anh)';
-            document.getElementById('total-questions').textContent = currentQuizData.length;
+        function getUnitTitle(unitId) {
+            switch(unitId) {
+                case 'unit-1': return 'FAMILY LIFE';
+                case 'unit-2': return 'CLOTHING';
+                case 'unit-3': return 'MUSIC';
+                case 'unit-4': return 'SPECIAL FOODS';
+                case 'unit-5': return 'OUR HERITAGE';
+                case 'unit-6': return 'GENDER EQUALITY';
+                case 'unit-7': return 'ECONOMIC REFORMS IN VIET NAM';
+                case 'unit-8': return 'TOURISM';
+                case 'unit-9': return 'PROTECTING THE ENVIRONMENT';
+                case 'unit-10': return 'COMMUNITY SERVICES';
+                default: return '';
+            }
+        }
 
-            // Đảm bảo các khối hiển thị quiz cơ bản được hiện
-            document.getElementById('final-result').classList.add('hidden');
-            document.getElementById('result-area').classList.add('hidden');
-            document.getElementById('question-area').classList.remove('hidden');
-            
-            if (isInitialSetup) {
-                 // Ẩn/Hiện prompt và input cho chế độ writing (mặc định)
-                document.getElementById('writing-prompt').classList.remove('hidden');
-                document.getElementById('writing-input').classList.remove('hidden');
-                document.getElementById('check-writing-answer').classList.remove('hidden');
-                document.getElementById('multiple-choice-options').classList.add('hidden');
-                // Tạm thời hiển thị câu hỏi đầu tiên (có thể bị ẩn sau)
-                const firstItem = currentQuizData[0];
-                document.getElementById('writing-prompt').textContent = `Nghĩa là: "${firstItem.definition}"`;
-                document.getElementById('writing-input').value = '';
-                document.getElementById('question-index').textContent = 1;
-                document.getElementById('writing-input').disabled = false;
-                document.getElementById('writing-input').classList.remove('correct-answer', 'wrong-answer');
+        function switchTab(tabId) {
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('active');
+                }
+            });
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const activeContent = document.getElementById(`${tabId}-tab`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+
+                if (tabId === 'flashcard') {
+                    displayFlashcard(currentUnit, currentCardIndex);
+                } else if (tabId === 'vocabulary-list') {
+                    displayVocabularyList(currentUnit);
+                } else if (tabId === 'practice') {
+                    // Kích hoạt sub-tab mặc định (Quiz)
+                    const activeSubTab = document.querySelector('.practice-sub-tab-button.active');
+                    if (activeSubTab) {
+                        switchPracticeSubTab(activeSubTab.dataset.practiceTab);
+                    } else {
+                         switchPracticeSubTab('quiz');
+                    }
+                }
+            }
+        }
+
+        // START: Practice Sub-Tab Logic
+        const practiceSubTabButtons = document.querySelectorAll('.practice-sub-tab-button');
+        const subTabContents = document.querySelectorAll('.practice-sub-content');
+
+        function switchPracticeSubTab(subTabId) {
+            // Dọn dẹp state của game Word Puzzle Tetris 
+            if (wordPuzzleInterval) clearInterval(wordPuzzleInterval); 
+
+            practiceSubTabButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.practiceTab === subTabId) {
+                    btn.classList.add('active');
+                }
+            });
+            subTabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            if (subTabId === 'quiz') {
+                document.getElementById('practice-quiz-content').classList.remove('hidden');
+                loadQuiz(currentUnit);
+            } else if (subTabId === 'match-game') {
+                // Logic cho Nối Từ
+                document.getElementById('practice-word-puzzle-content').classList.remove('hidden');
+                initMatchGame();
+            } else if (subTabId === 'audio-hunt') {
+                // Logic cho Audio Hunt
+                document.getElementById('practice-audio-hunt-content').classList.remove('hidden');
+                initAudioHunt();
+            } else if (subTabId === 'fill-in-blanks') {
+                // Logic cho Điền Từ
+                document.getElementById('practice-fill-in-blanks-content').classList.remove('hidden');
+                initFillInBlanks();
+            } else if (subTabId === 'word-puzzle-tetris') {
+                // NEW: Logic cho Xếp Chữ (Tetris)
+                document.getElementById('practice-word-puzzle-tetris-content').classList.remove('hidden');
+                initWordPuzzleTetris();
+            }
+        }
+
+        // END: Practice Sub-Tab Logic
+
+        // START: Flashcard Logic
+        function displayFlashcard(unitId, index) {
+            const vocabList = vocabularyData[unitId];
+            if (!vocabList || vocabList.length === 0) {
+                cardWord.textContent = "Chưa có dữ liệu từ vựng.";
+                cardDefinition.textContent = "";
+                cardPos.textContent = "";
+                cardIPAFront.textContent = ""; // Reset IPA front
+                cardIPA.textContent = "";
+                cardExample.textContent = "";
+                cardCounter.textContent = "";
+                return;
+            }
+            const wordData = vocabList[index];
+
+            // Đặt lại thẻ về mặt trước và không lật
+            cardContainer.classList.remove('flipped'); 
+
+            // Cập nhật nội dung mặt trước
+            cardWord.textContent = wordData.word;
+            cardPos.textContent = `(${wordData.pos})`;
+            cardIPAFront.textContent = wordData.ipa;
+
+            // Cập nhật nội dung mặt sau
+            cardDefinition.textContent = wordData.definition;
+            cardIPA.textContent = wordData.ipa;
+            cardExample.textContent = wordData.example;
+
+            // Cập nhật bộ đếm
+            cardCounter.textContent = `Thẻ ${index + 1} / ${vocabList.length}`;
+
+            // Cập nhật trạng thái nút
+            prevBtn.disabled = (index === 0);
+            nextBtn.disabled = (index === vocabList.length - 1);
+        }
+
+        flipBtn.addEventListener('click', () => {
+            cardContainer.classList.toggle('flipped');
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                displayFlashcard(currentUnit, currentCardIndex);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentCardIndex < vocabularyData[currentUnit].length - 1) {
+                currentCardIndex++;
+                displayFlashcard(currentUnit, currentCardIndex);
+            }
+        });
+
+        // END: Flashcard Logic
+
+
+        // START: Vocabulary List Logic
+        function displayVocabularyList(unitId) {
+            const vocabList = vocabularyData[unitId];
+            const tableContainer = document.getElementById('vocab-table-container');
+
+            if (!vocabList || vocabList.length === 0) {
+                tableContainer.innerHTML = `<p class="text-gray-500">Unit này chưa có dữ liệu từ vựng.</p>`;
                 return;
             }
 
-            // Bắt đầu câu hỏi đầu tiên khi không phải là setup
-            nextQuestion();
+            let tableHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Từ Vựng</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Loại từ / Phát âm</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Nghĩa</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Ví dụ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            vocabList.forEach(item => {
+                // NEW: Thêm biểu tượng loa và sự kiện onclick
+                tableHTML += `
+                    <tr class="hover:bg-gray-50 transition duration-150">
+                        <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <div class="flex items-center space-x-2">
+                                <span>${item.word}</span>
+                                <i class="fas fa-volume-up text-blue-500 cursor-pointer hover:text-blue-700 transition" 
+                                   onclick="speakWord('${item.word.replace(/'/g, "\\'")}')"></i> 
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <span class="font-semibold text-blue-600">(${item.pos})</span><br>
+                            <span class="font-mono italic text-sm text-gray-700">${item.ipa}</span>
+                        </td>
+                        <td class="px-3 py-3 whitespace-pre-wrap text-sm text-gray-700">${item.definition}</td>
+                        <td class="px-3 py-3 whitespace-pre-wrap text-sm italic text-gray-600">${item.example}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContainer.innerHTML = tableHTML;
+        }
+        // END: Vocabulary List Logic
+
+
+        // START: Quiz Logic
+        function getQuizWord(unitId) {
+            const vocabList = vocabularyData[unitId];
+            if (!vocabList || vocabList.length < 4) return null; // Cần ít nhất 4 từ để tạo 4 đáp án
+
+            // 1. Chọn ngẫu nhiên 1 từ làm từ mục tiêu
+            const targetWord = vocabList[Math.floor(Math.random() * vocabList.length)];
+            const question = targetWord.definition;
+
+            // 2. Lấy 3 từ sai ngẫu nhiên
+            let incorrectOptions = [];
+            let pool = vocabList.filter(item => item.word !== targetWord.word);
+            pool = shuffleArray(pool);
+            incorrectOptions = pool.slice(0, 3).map(item => item.word);
+
+            // 3. Trộn đáp án đúng vào
+            const options = shuffleArray([targetWord.word, ...incorrectOptions]);
+
+            return { question, target: targetWord.word, options };
         }
 
-        /**
-         * Chuyển sang câu hỏi tiếp theo
-         */
-        function nextQuestion() {
-            if (currentQuestionIndex < currentQuizData.length) {
-                const currentItem = currentQuizData[currentQuestionIndex];
-                document.getElementById('question-index').textContent = currentQuestionIndex + 1;
-                document.getElementById('result-area').classList.add('hidden');
+        function loadQuiz(unitId) {
+            quizMessageEl.textContent = "";
+            quizNextBtn.classList.add('hidden');
+            quizOptionsEl.innerHTML = "";
 
-                if (quizType === 'writing') {
-                    displayWritingQuestion(currentItem);
-                } else {
-                    displayMultipleChoiceQuestion(currentItem);
-                }
-                currentQuestionIndex++;
-            } else {
-                // Hiển thị kết quả cuối cùng
-                showFinalResult();
-            }
-        }
-
-        /**
-         * Hiển thị câu hỏi Viết Từ
-         * @param {object} item Dữ liệu từ vựng cho câu hỏi
-         */
-        function displayWritingQuestion(item) {
-            // Ẩn/Hiện các thành phần cần thiết
-            document.getElementById('writing-prompt').classList.remove('hidden');
-            document.getElementById('writing-input').classList.remove('hidden');
-            document.getElementById('check-writing-answer').classList.remove('hidden');
-            document.getElementById('multiple-choice-options').classList.add('hidden');
-
-            const writingInput = document.getElementById('writing-input');
-            const checkButton = document.getElementById('check-writing-answer');
-
-            // Thiết lập câu hỏi
-            document.getElementById('writing-prompt').textContent = `Nghĩa là: "${item.definition}"`;
-            writingInput.value = '';
-            writingInput.disabled = false;
-            writingInput.classList.remove('correct-answer', 'wrong-answer');
-            writingInput.focus();
-
-            // Gắn lại sự kiện kiểm tra (phòng trường hợp đã bị gỡ)
-            checkButton.onclick = () => checkWritingAnswer(item.word);
-            writingInput.onkeyup = function(e) {
-                if (e.key === 'Enter' && !this.disabled) {
-                    checkWritingAnswer(item.word);
-                }
-            };
-        }
-
-        /**
-         * Kiểm tra đáp án Viết Từ
-         * @param {string} correctAnswer Từ đúng
-         */
-        function checkWritingAnswer(correctAnswer) {
-            const writingInput = document.getElementById('writing-input');
-            const userAnswer = writingInput.value.trim().toLowerCase();
-            const normalizedCorrectAnswer = correctAnswer.trim().toLowerCase();
-            const feedbackMessage = document.getElementById('feedback-message');
-            const correctAnswerDisplay = document.getElementById('correct-answer-display');
-
-            writingInput.disabled = true;
-
-            if (userAnswer === normalizedCorrectAnswer) {
-                score++;
-                feedbackMessage.textContent = 'Chính xác! 🎉';
-                feedbackMessage.classList.remove('text-red-600');
-                feedbackMessage.classList.add('text-emerald-600');
-                writingInput.classList.add('correct-answer');
-                correctAnswerDisplay.classList.add('hidden');
-
-            } else {
-                feedbackMessage.textContent = 'Sai rồi. 😔';
-                feedbackMessage.classList.remove('text-emerald-600');
-                feedbackMessage.classList.add('text-red-600');
-                writingInput.classList.add('wrong-answer');
-                correctAnswerDisplay.textContent = `Đáp án đúng là: ${correctAnswer}`;
-                correctAnswerDisplay.classList.remove('hidden');
+            const quizData = getQuizWord(unitId);
+            if (!quizData) {
+                quizQuestionEl.textContent = "Không đủ từ vựng (cần ít nhất 4 từ) để tạo trắc nghiệm.";
+                return;
             }
 
-            document.getElementById('result-area').classList.remove('hidden');
-            document.getElementById('check-writing-answer').classList.add('hidden');
-        }
+            currentQuizWord = quizData.target;
+            quizQuestionEl.textContent = `Tìm từ tiếng Anh cho nghĩa: "${quizData.question}"`;
+            quizOptions = quizData.options;
 
-        /**
-         * Hiển thị câu hỏi Trắc Nghiệm
-         * @param {object} item Dữ liệu từ vựng cho câu hỏi
-         */
-        function displayMultipleChoiceQuestion(item) {
-            // Ẩn/Hiện các thành phần cần thiết
-            document.getElementById('writing-prompt').classList.remove('hidden');
-            document.getElementById('multiple-choice-options').classList.remove('hidden');
-            document.getElementById('writing-input').classList.add('hidden');
-            document.getElementById('check-writing-answer').classList.add('hidden');
-
-            const optionsContainer = document.getElementById('multiple-choice-options');
-            optionsContainer.innerHTML = '';
-            const allWords = vocabularyData[currentUnit].map(v => v.word);
-            let wrongOptions = allWords.filter(word => word !== item.word);
-            
-            // Xáo trộn và lấy 3 đáp án sai
-            wrongOptions = shuffleArray(wrongOptions).slice(0, 3);
-            let options = shuffleArray([item.word, ...wrongOptions]);
-
-            // Thiết lập câu hỏi
-            document.getElementById('writing-prompt').textContent = `Chọn từ tiếng Anh có nghĩa là: "${item.definition}"`;
-
-            options.forEach(option => {
+            quizOptions.forEach((option, index) => {
                 const button = document.createElement('button');
+                button.className = 'quiz-option w-full p-4 border-2 border-gray-300 rounded-lg text-left text-lg font-medium hover:bg-gray-100 transition duration-150';
                 button.textContent = option;
-                button.className = 'quiz-button bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg border-2 border-gray-300 transition-all text-lg';
-                button.onclick = () => checkMultipleChoiceAnswer(button, option, item.word, optionsContainer);
-                optionsContainer.appendChild(button);
+                button.setAttribute('data-answer', option);
+                button.onclick = () => checkQuizAnswer(button, option);
+                quizOptionsEl.appendChild(button);
             });
         }
 
-        /**
-         * Kiểm tra đáp án Trắc Nghiệm
-         * @param {HTMLElement} selectedButton Nút người dùng chọn
-         * @param {string} userAnswer Từ người dùng chọn
-         * @param {string} correctAnswer Từ đúng
-         * @param {HTMLElement} optionsContainer Container chứa các lựa chọn
-         */
-        function checkMultipleChoiceAnswer(selectedButton, userAnswer, correctAnswer, optionsContainer) {
-            const feedbackMessage = document.getElementById('feedback-message');
-            const correctAnswerDisplay = document.getElementById('correct-answer-display');
+        function checkQuizAnswer(selectedButton, selectedAnswer) {
+            // Ngăn chặn chọn lại
+            document.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.onclick = null;
+            });
 
-            // Vô hiệu hóa tất cả các nút
-            Array.from(optionsContainer.children).forEach(button => button.disabled = true);
-
-            if (userAnswer === correctAnswer) {
-                score++;
-                feedbackMessage.textContent = 'Chính xác! 🎉';
-                feedbackMessage.classList.remove('text-red-600');
-                feedbackMessage.classList.add('text-emerald-600');
-                selectedButton.classList.remove('bg-gray-100', 'border-gray-300', 'hover:bg-gray-200');
-                selectedButton.classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
-                correctAnswerDisplay.classList.add('hidden');
+            if (selectedAnswer === currentQuizWord) {
+                selectedButton.classList.add('correct');
+                quizMessageEl.textContent = 'Chính xác! 🎉';
+                quizMessageEl.style.color = 'green';
+                score += 1;
             } else {
-                feedbackMessage.textContent = 'Sai rồi. 😔';
-                feedbackMessage.classList.remove('text-emerald-600');
-                feedbackMessage.classList.add('text-red-600');
-                selectedButton.classList.remove('bg-gray-100', 'border-gray-300', 'hover:bg-gray-200');
-                selectedButton.classList.add('bg-red-500', 'text-white', 'border-red-500');
-
+                selectedButton.classList.add('incorrect');
+                quizMessageEl.textContent = `Sai rồi. Đáp án đúng là: "${currentQuizWord}"`;
+                quizMessageEl.style.color = 'red';
                 // Highlight đáp án đúng
-                Array.from(optionsContainer.children).forEach(button => {
-                    if (button.textContent === correctAnswer) {
-                        button.classList.remove('bg-gray-100', 'border-gray-300');
-                        button.classList.add('bg-emerald-300', 'border-emerald-500');
+                document.querySelectorAll('.quiz-option').forEach(btn => {
+                    if (btn.getAttribute('data-answer') === currentQuizWord) {
+                        btn.classList.add('correct');
                     }
                 });
-                correctAnswerDisplay.classList.add('hidden'); // Không cần hiển thị lại đáp án
             }
 
-            document.getElementById('result-area').classList.remove('hidden');
+            quizNextBtn.classList.remove('hidden');
         }
 
-        /**
-         * Hiển thị kết quả cuối cùng
-         */
-        function showFinalResult() {
-            document.getElementById('question-area').classList.add('hidden');
-            document.getElementById('result-area').classList.add('hidden');
-            document.getElementById('final-result').classList.remove('hidden');
+        quizNextBtn.addEventListener('click', () => {
+            loadQuiz(currentUnit);
+        });
 
-            document.getElementById('final-score').textContent = score;
-            document.getElementById('final-total').textContent = currentQuizData.length;
+        // END: Quiz Logic
+
+
+        // START: Logic cho Bài Nối Từ (Matching Game)
+        function initMatchGame() {
+            // Lấy dữ liệu từ vựng từ Unit hiện tại và thêm originalIndex
+            const fullVocabList = vocabularyData[currentUnit].map((item, index) => ({ originalIndex: index, en: item.word, vi: item.definition }));
+
+            // Giới hạn số lượng từ xuống tối đa 8 từ
+            const MAX_WORDS = 8;
+            let vocabListToUse;
+            if (fullVocabList.length > MAX_WORDS) {
+                // Xáo trộn toàn bộ danh sách và chọn MAX_WORDS từ đầu tiên
+                vocabListToUse = shuffleArray([...fullVocabList]).slice(0, MAX_WORDS);
+            } else {
+                vocabListToUse = fullVocabList;
+            }
+
+            if (vocabListToUse.length < 2) {
+                updateMatchMessage("Unit này không đủ từ vựng (cần ít nhất 2 từ) để chơi Bài Nối Từ.", 'error');
+                englishColMatch.innerHTML = `<h2 class="text-xl font-semibold text-blue-700 mb-4 border-b pb-2">Từ Tiếng Anh</h2>`;
+                vietnameseColMatch.innerHTML = `<h2 class="text-xl font-semibold text-green-700 mb-4 border-b pb-2">Nghĩa Tiếng Việt</h2>`;
+                checkBtnMatch.disabled = true;
+                return;
+            }
+
+            // Reset state
+            currentMatch = {};
+            selectedCard = null;
+            matchGameState = 'playing';
+            matchMessageBox.classList.add('hidden');
+            matchMessageBox.innerHTML = '';
+            checkBtnMatch.disabled = false;
+
+            // Tạo danh sách từ đã xáo trộn TỪ DANH SÁCH ĐÃ GIỚI HẠN
+            shuffledEnglish = vocabListToUse.map(item => ({ text: item.en, originalIndex: item.originalIndex }));
+            shuffledVietnamese = vocabListToUse.map(item => ({ text: item.vi, originalIndex: item.originalIndex }));
+            shuffleArray(shuffledEnglish);
+            shuffleArray(shuffledVietnamese);
+
+            // Render giao diện
+            englishColMatch.innerHTML = `<h2 class="text-xl font-semibold text-blue-700 mb-4 border-b pb-2">Từ Tiếng Anh</h2>`;
+            vietnameseColMatch.innerHTML = `<h2 class="text-xl font-semibold text-green-700 mb-4 border-b pb-2">Nghĩa Tiếng Việt</h2>`;
+
+            shuffledEnglish.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card-item p-3 border-2 border-blue-200 rounded-lg text-lg font-medium text-blue-900';
+                card.id = `en-${item.originalIndex}`;
+                card.textContent = item.text;
+                card.setAttribute('data-type', 'en');
+                card.setAttribute('data-index', item.originalIndex);
+                card.onclick = handleCardClick;
+                englishColMatch.appendChild(card);
+            });
+
+            shuffledVietnamese.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card-item p-3 border-2 border-green-200 rounded-lg text-lg font-medium text-green-900';
+                card.id = `vi-${item.originalIndex}`;
+                card.textContent = item.text;
+                card.setAttribute('data-type', 'vi');
+                card.setAttribute('data-index', item.originalIndex);
+                card.onclick = handleCardClick;
+                vietnameseColMatch.appendChild(card);
+            });
         }
 
-        // --- Thiết lập sự kiện khi tải trang ---
-        window.onload = function() {
-            // Thiết lập sự kiện cho các nút Unit
-            document.getElementById('unit-selection').querySelectorAll('.unit-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const unitKey = button.getAttribute('data-unit');
-                    selectUnit(unitKey);
-                });
-            });
+        function handleCardClick(event) {
+            if (matchGameState !== 'playing') return;
 
-            // Thiết lập sự kiện cho các nút Tab
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabName = button.getAttribute('data-tab');
-                    switchTab(tabName);
-                });
-            });
+            const clickedCard = event.currentTarget;
+            const cardType = clickedCard.getAttribute('data-type');
+            const cardIndex = clickedCard.getAttribute('data-index');
 
-            // Thiết lập sự kiện cho các nút Quiz trong tab 'Ôn luyện'
-            document.getElementById('quiz-options').querySelectorAll('.quiz-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const quizType = button.getAttribute('data-quiz-type');
-                    startQuiz(quizType);
-                });
-            });
+            if (clickedCard.classList.contains('matched')) return; // Bỏ qua thẻ đã khớp
 
-            // Thiết lập sự kiện cho nút điều hướng Flashcard
-            document.getElementById('prev-flashcard').addEventListener('click', () => {
-                if (currentFlashcardIndex > 0) {
-                    displayFlashcard(currentFlashcardIndex - 1);
+            // Trường hợp 1: Thẻ đã được chọn -> Bỏ chọn
+            if (selectedCard && selectedCard.id === clickedCard.id) {
+                selectedCard.classList.remove('selected');
+                selectedCard = null;
+                updateMatchMessage("Đã bỏ chọn thẻ.", 'info');
+                return;
+            }
+
+            // Trường hợp 2: Chưa có thẻ nào được chọn hoặc thẻ mới cùng loại -> Chọn thẻ này
+            if (!selectedCard || selectedCard.getAttribute('data-type') === cardType) {
+                // Nếu có thẻ cùng loại đã chọn, bỏ chọn thẻ cũ
+                if (selectedCard) {
+                    selectedCard.classList.remove('selected');
                 }
+                
+                selectedCard = clickedCard;
+                selectedCard.classList.add('selected');
+                updateMatchMessage(`Đã chọn thẻ ${cardType === 'en' ? 'tiếng Anh' : 'tiếng Việt'}. Chọn thẻ còn lại để ghép cặp.`, 'info');
+                return;
+            }
+
+            // Trường hợp 3: Đã có 1 thẻ khác loại được chọn -> Tạo cặp
+            if (selectedCard && selectedCard.getAttribute('data-type') !== cardType) {
+                const [wordCard, meaningCard] = selectedCard.getAttribute('data-type') === 'en' ? [selectedCard, clickedCard] : [clickedCard, selectedCard];
+                const enIndex = wordCard.getAttribute('data-index');
+                const viIndex = meaningCard.getAttribute('data-index');
+
+                // Vòng lặp phức tạp để tìm và reset các cặp bị unmatch/thay thế
+                const keysToUpdate = [];
+                for (const [key, value] of Object.entries(currentMatch)) {
+                    // Thẻ tiếng Anh này đã được ghép với thẻ tiếng Việt khác. Reset thẻ tiếng Việt cũ.
+                    if (key == enIndex) { 
+                        keysToUpdate.push(key); 
+                        const oldViCard = document.getElementById(`vi-${value}`); 
+                        if (oldViCard) oldViCard.classList.remove('selected');
+                    }
+                    // Thẻ tiếng Việt này đã được ghép với thẻ tiếng Anh khác. Reset thẻ tiếng Anh cũ.
+                    if (value == viIndex) { 
+                        keysToUpdate.push(key); 
+                        const oldEnCard = document.getElementById(`en-${key}`); 
+                        if (oldEnCard) oldEnCard.classList.remove('selected');
+                    }
+                }
+                
+                // Xóa các cặp bị thay thế
+                keysToUpdate.forEach(key => delete currentMatch[key]);
+
+                // Xóa highlight của 2 thẻ đang ghép nếu chúng đã từng được ghép
+                wordCard.classList.remove('selected');
+                meaningCard.classList.remove('selected');
+
+                // Tạo cặp mới
+                currentMatch[enIndex] = viIndex;
+                wordCard.classList.add('selected');
+                meaningCard.classList.add('selected');
+
+                selectedCard = null; // Reset thẻ đã chọn
+                updateMatchMessage("Đã ghép cặp thành công! Nhấn 'Kiểm Tra Kết Quả' khi hoàn thành.", 'success');
+                return;
+            }
+        }
+
+        // Hàm kiểm tra kết quả
+        function checkMatchAnswers() {
+            const totalMatches = shuffledEnglish.length; // Tổng số cặp cần ghép
+
+            if (Object.keys(currentMatch).length !== totalMatches) {
+                updateMatchMessage(`Bạn cần ghép đủ ${totalMatches} cặp trước khi kiểm tra.`, 'warning');
+                return;
+            }
+
+            matchGameState = 'finished';
+            checkBtnMatch.disabled = true;
+
+            // Xóa hết trạng thái selected (xanh dương)
+            document.querySelectorAll('.card-item').forEach(card => {
+                card.classList.remove('selected');
+                card.onclick = null; // Ngăn chặn tương tác tiếp
             });
 
-            document.getElementById('next-flashcard').addEventListener('click', () => {
-                const vocab = vocabularyData[currentUnit];
-                if (currentFlashcardIndex < vocab.length - 1) {
-                    displayFlashcard(currentFlashcardIndex + 1);
+            let correctCount = 0;
+
+            // Lặp qua tất cả các thẻ tiếng Anh
+            shuffledEnglish.forEach(enItem => {
+                const enIndex = enItem.originalIndex.toString();
+                const wordCard = document.getElementById(`en-${enIndex}`);
+                const viIndex = currentMatch[enIndex]; // Lấy index của thẻ tiếng Việt đã ghép
+
+                if (!viIndex) return; // Bỏ qua nếu không được ghép
+
+                const meaningCard = document.getElementById(`vi-${viIndex}`);
+                
+                // So sánh original index
+                if (enIndex == viIndex) {
+                    // Đúng
+                    wordCard.classList.add('correct', 'matched');
+                    meaningCard.classList.add('correct', 'matched');
+                    correctCount++;
+                } else {
+                    // Sai
+                    wordCard.classList.add('incorrect');
+                    meaningCard.classList.add('incorrect');
                 }
             });
             
-            // Thiết lập sự kiện cho nút "Làm Lại Quiz"
-            document.getElementById('restart-quiz').onclick = () => startQuiz(quizType);
+            // Hiển thị kết quả cuối cùng
+            const percentage = Math.round((correctCount / totalMatches) * 100);
+            let messageText = `Kết quả của bạn: ${correctCount}/${totalMatches} (${percentage}%)`;
+            let type = 'success';
+            if (percentage < 50) type = 'error';
+            else if (percentage < 100) type = 'warning';
 
-            // Thiết lập sự kiện cho nút "Câu Tiếp Theo"
-            document.getElementById('next-question').onclick = nextQuestion;
-            
-            // Thiết lập sự kiện kiểm tra đáp án cho Writing Quiz khi nhấn Enter
-            document.getElementById('writing-input').onkeyup = function(e) {
-                if (e.key === 'Enter' && !this.disabled && currentQuizData.length > 0 && currentQuestionIndex > 0) {
-                    checkWritingAnswer(currentQuizData[currentQuestionIndex - 1].word);
+            updateMatchMessage(messageText, type);
+        }
+
+        // Hiển thị thông báo
+        function updateMatchMessage(text, type) {
+            matchMessageBox.innerText = text;
+            matchMessageBox.classList.remove('hidden', 'bg-red-100', 'bg-yellow-100', 'bg-blue-100', 'bg-green-100', 'text-red-800', 'text-yellow-800', 'text-blue-800', 'text-green-800');
+            switch(type) {
+                case 'success':
+                    matchMessageBox.classList.add('bg-green-100', 'text-green-800');
+                    break;
+                case 'warning':
+                    matchMessageBox.classList.add('bg-yellow-100', 'text-yellow-800');
+                    break;
+                case 'error':
+                    matchMessageBox.classList.add('bg-red-100', 'text-red-800');
+                    break;
+                case 'info':
+                default:
+                    matchMessageBox.classList.add('bg-blue-100', 'text-blue-800');
+                    break;
+            }
+        }
+        // END: Logic cho Bài Nối Từ
+
+        
+        // START: Logic cho Bài Nghe & Chọn (Audio Hunt)
+        const audioHuntTimerDuration = 3; // 3 seconds per round
+        function getIncorrectOptions(vocabList, correctWord, count) {
+            let incorrectWords = vocabList
+                .map(item => item.word)
+                .filter(word => word !== correctWord);
+
+            // Xáo trộn và cắt
+            return shuffleArray(incorrectWords).slice(0, count);
+        }
+
+        function generateAudioHuntRounds(unitId) {
+            const vocabList = vocabularyData[unitId];
+            if (!vocabList || vocabList.length < 6) return null; // Cần ít nhất 6 từ (1 đúng + 5 sai)
+
+            const shuffledList = shuffleArray([...vocabList]);
+            const roundsToGenerate = Math.min(shuffledList.length, MAX_AUDIO_HUNT_ROUNDS);
+            const rounds = [];
+
+            for (let i = 0; i < roundsToGenerate; i++) {
+                const correctWord = shuffledList[i].word;
+                // Lấy 5 từ sai (hoặc ít hơn nếu danh sách ngắn)
+                const incorrectOptions = getIncorrectOptions(vocabList, correctWord, 5);
+                const options = shuffleArray([correctWord, ...incorrectOptions]);
+                
+                rounds.push({
+                    audio: correctWord,
+                    options: options.slice(0, 6) // Chỉ lấy tối đa 6 options
+                });
+            }
+            return rounds;
+        }
+
+        function initAudioHunt() {
+            audioHuntRounds = generateAudioHuntRounds(currentUnit);
+
+            if (!audioHuntRounds || audioHuntRounds.length < 5) {
+                audioHuntMessageEl.textContent = "Unit này không đủ từ vựng (cần ít nhất 5 từ) để chơi game Nghe & Chọn.";
+                audioHuntMessageEl.classList.add('text-red-600');
+                audioHuntWordGrid.innerHTML = '';
+                audioHuntSpeaker.classList.add('hidden');
+                document.getElementById('audioHuntTopBar')?.classList.add('hidden');
+                return;
+            }
+            // Reset game state
+            audioHuntRound = 1;
+            audioHuntScore = 0;
+            audioHuntGameover.classList.add('hidden');
+            audioHuntSpeaker.classList.remove('hidden');
+            document.getElementById('audioHuntTopBar')?.classList.remove('hidden');
+
+            loadAudioHuntRound();
+        }
+
+        function nextAudioHuntRound() {
+            audioHuntRound++;
+            if (audioHuntRound > MAX_AUDIO_HUNT_ROUNDS || audioHuntRound > audioHuntRounds.length) {
+                endAudioHuntGame();
+            } else {
+                loadAudioHuntRound();
+            }
+        }
+
+        function startAudioHuntTimer() {
+            let timeLeft = audioHuntTimerDuration;
+            audioHuntTimerEl.textContent = timeLeft;
+            audioHuntTimerInterval = setInterval(() => {
+                timeLeft--;
+                audioHuntTimerEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(audioHuntTimerInterval);
+                    audioHuntTimerEl.textContent = 0;
+                    // Disable all options and highlight correct on timeout
+                    highlightCorrectAudioHunt(currentCorrectWord, 'Hết giờ!'); 
+                    // Disable future clicks for this round
+                    audioHuntWordGrid.querySelectorAll('.word-card').forEach(c => c.classList.add("disabled-round-end"));
+                    setTimeout(nextAudioHuntRound, 1200);
                 }
+            }, 1000);
+        }
+
+        function highlightCorrectAudioHunt(correctWord, messageText) {
+             audioHuntMessageEl.textContent = messageText;
+             audioHuntMessageEl.classList.add('text-red-600');
+             audioHuntMessageEl.classList.remove('text-green-600');
+
+            audioHuntWordGrid.querySelectorAll('.word-card').forEach(card => {
+                if (card.textContent === correctWord) {
+                    card.classList.add("bg-green-500");
+                    card.classList.remove("bg-white", "hover:bg-blue-50", "text-gray-800");
+                } else {
+                     card.classList.add("bg-red-500");
+                     card.classList.remove("bg-white", "hover:bg-blue-50", "text-gray-800");
+                }
+            });
+        }
+
+        function updateAudioHuntScore() {
+            audioHuntScoreEl.textContent = audioHuntScore;
+            audioHuntRoundEl.textContent = `${audioHuntRound}/${MAX_AUDIO_HUNT_ROUNDS}`;
+        }
+
+        function loadAudioHuntRound() {
+            if (audioHuntRound > MAX_AUDIO_HUNT_ROUNDS || audioHuntRound > audioHuntRounds.length) {
+                endAudioHuntGame();
+                return;
+            }
+            
+            // Clear previous states
+            audioHuntWordGrid.innerHTML = '';
+            audioHuntMessageEl.textContent = '';
+            isFirstTry = true;
+            clearInterval(audioHuntTimerInterval); // Reset timer just in case
+
+            const roundData = audioHuntRounds[audioHuntRound - 1];
+            currentCorrectWord = roundData.audio;
+
+            // Load cards
+            roundData.options.forEach(word => {
+                const card = document.createElement('div');
+                card.classList.add('word-card', 'p-4', 'bg-white', 'rounded-xl', 'border-2', 'border-gray-200', 'shadow-md', 'text-lg', 'font-semibold', 'text-gray-800', 'cursor-pointer', 'transition', 'duration-200', 'hover:bg-blue-50');
+                card.textContent = word;
+                card.onclick = () => {
+                    if (card.classList.contains("disabled-round-end") || card.classList.contains("bg-red-500")) return; // Ignore if disabled or already wrong guess
+                    
+                    clearInterval(audioHuntTimerInterval); // Stop timer on selection
+
+                    if (word === currentCorrectWord) {
+                        card.classList.add("bg-green-500", "text-white", "correct");
+                        card.classList.remove("bg-white", "hover:bg-blue-50", "border-gray-200", "cursor-pointer");
+
+                        // Calculate score based on attempt
+                        const scoreGained = isFirstTry ? 10 : 5;
+                        audioHuntScore += scoreGained;
+                        updateAudioHuntScore();
+
+                        audioHuntMessageEl.textContent = `Chính xác! (+${scoreGained} điểm) 🎉`;
+                        audioHuntMessageEl.classList.add('text-green-600');
+                        audioHuntMessageEl.classList.remove('text-red-600');
+                        
+                        // Disable all and move to next round
+                        audioHuntWordGrid.querySelectorAll('.word-card').forEach(c => c.classList.add("disabled-round-end"));
+                        setTimeout(nextAudioHuntRound, 1200);
+
+                    } else {
+                        // Sai
+                        isFirstTry = false;
+                        card.classList.add("bg-red-500", "text-white");
+                        card.classList.remove("bg-white", "hover:bg-blue-50", "border-gray-200", "cursor-pointer");
+                        audioHuntMessageEl.textContent = `Sai. Thử lại hoặc nghe lại.`;
+                        audioHuntMessageEl.classList.add('text-red-600');
+                        audioHuntMessageEl.classList.remove('text-green-600');
+                        
+                        // Restart timer
+                        startAudioHuntTimer();
+                    }
+                };
+                audioHuntWordGrid.appendChild(card);
+            });
+
+            updateAudioHuntScore();
+            speakWord(currentCorrectWord); // Phát âm lần đầu
+            startAudioHuntTimer(); // Bắt đầu đếm ngược
+        }
+
+        function endAudioHuntGame() {
+            clearInterval(audioHuntTimerInterval);
+            audioHuntFinalScore.textContent = audioHuntScore;
+            audioHuntGameover.classList.remove('hidden');
+            audioHuntWordGrid.innerHTML = '';
+            audioHuntSpeaker.classList.add('hidden');
+            audioHuntMessageEl.textContent = '';
+        }
+
+        // Event Listeners
+        audioHuntSpeaker.addEventListener('click', () => {
+            if (currentCorrectWord) {
+                speakWord(currentCorrectWord);
+            }
+        });
+        document.getElementById('audioHuntRestartBtn').addEventListener('click', initAudioHunt);
+
+        // END: Logic cho Bài Nghe & Chọn
+
+
+        // START: Logic cho Bài Điền Từ (Fill in Blanks)
+        function generateBlankRounds(unitId) {
+            const vocabList = vocabularyData[unitId];
+            if (!vocabList || vocabList.length < 5) return null; // Cần ít nhất 5 từ
+
+            // Lấy ngẫu nhiên MAX_BLANK_ROUNDS từ (hoặc max) để làm câu hỏi
+            const shuffledList = shuffleArray([...vocabList]);
+            const roundsToGenerate = Math.min(shuffledList.length, MAX_BLANK_ROUNDS);
+            const rounds = [];
+
+            for (let i = 0; i < roundsToGenerate; i++) {
+                const item = shuffledList[i];
+                // Thay thế từ trong câu ví dụ bằng dấu gạch chân (______)
+                // Sử dụng RegExp để thay thế cả từ và đảm bảo không thay thế nhầm (gi - global ignore case)
+                // Ký tự \b đảm bảo thay thế toàn bộ từ (word boundary)
+                const wordPattern = new RegExp('\\b' + item.word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'gi');
+                const sentenceWithBlank = item.example.replace(wordPattern, '______');
+
+                // Nếu không có sự thay thế nào xảy ra, thì bỏ qua (câu ví dụ không chứa từ)
+                if (sentenceWithBlank.includes('______')) {
+                    rounds.push({
+                        sentence: sentenceWithBlank,
+                        correctWord: item.word,
+                        definition: item.definition // ADDED: Thêm nghĩa tiếng Việt
+                    });
+                }
+            }
+
+            // Nếu sau khi lọc vẫn không đủ 5 câu
+            if (rounds.length < 5) return null;
+            return rounds;
+        }
+
+        function initFillInBlanks() {
+            blankQuizRounds = generateBlankRounds(currentUnit);
+            if (!blankQuizRounds) {
+                const errorBox = document.getElementById('blank-question-box');
+                errorBox.classList.remove('bg-purple-50');
+                errorBox.classList.add('bg-red-100');
+                blankSentenceEl.innerHTML = `<p class="text-xl font-bold text-red-700">Unit này không đủ từ vựng (cần ít nhất 5 câu ví dụ có từ vựng) để chơi game Điền Từ.</p>`;
+                blankInputEl.classList.add('hidden');
+                blankCheckBtn.classList.add('hidden');
+                blankNextBtn.classList.add('hidden');
+                blankMessageEl.textContent = '';
+                document.getElementById('blank-stats').classList.add('hidden');
+                return;
+            }
+
+            // Reset state
+            blankCurrentRound = 0;
+            blankScore = 0;
+            blankInputEl.classList.remove('hidden');
+            blankCheckBtn.classList.remove('hidden');
+            document.getElementById('blank-stats').classList.remove('hidden');
+            
+            loadBlankQuestion();
+        }
+
+        function updateBlankStats() {
+            blankScoreEl.textContent = blankScore;
+            blankProgressEl.textContent = `${blankCurrentRound + 1}/${MAX_BLANK_ROUNDS}`;
+
+            if (blankCurrentRound >= MAX_BLANK_ROUNDS) {
+                 endFillInBlanksGame();
+            }
+        }
+
+        function loadBlankQuestion() {
+            if (blankCurrentRound >= MAX_BLANK_ROUNDS || blankCurrentRound >= blankQuizRounds.length) {
+                endFillInBlanksGame();
+                return;
+            }
+            const currentRoundData = blankQuizRounds[blankCurrentRound];
+            blankCorrectWord = currentRoundData.correctWord;
+
+            blankSentenceEl.innerHTML = `
+                <p class="text-xl font-medium text-gray-800 mb-2">Ý nghĩa: <span class="text-purple-700 font-semibold">${currentRoundData.definition}</span></p>
+                <p class="text-2xl font-bold text-gray-900 mt-4">${currentRoundData.sentence}</p>
+            `;
+            blankInputEl.value = '';
+            blankInputEl.disabled = false;
+            blankCheckBtn.disabled = false;
+            blankNextBtn.classList.add('hidden');
+            blankMessageEl.textContent = '';
+            blankInputEl.focus();
+            updateBlankStats();
+        }
+
+        function checkBlankAnswer() {
+            // Lấy từ vựng (ignore case)
+            const userAnswer = blankInputEl.value.trim().toLowerCase();
+            const correctAnswer = blankCorrectWord.trim().toLowerCase();
+            const messageBox = document.getElementById('blank-question-box');
+
+            blankInputEl.disabled = true;
+            blankCheckBtn.disabled = true;
+            blankNextBtn.classList.remove('hidden');
+
+            if (userAnswer === correctAnswer) {
+                blankScore += 10;
+                blankMessageEl.textContent = 'Chính xác! (+10 điểm) 🎉';
+                blankMessageEl.style.color = 'green';
+                messageBox.classList.remove('bg-purple-50', 'bg-red-100');
+                messageBox.classList.add('bg-green-100');
+            } else {
+                blankMessageEl.textContent = `Sai rồi. Đáp án đúng là: "${blankCorrectWord}"`;
+                blankMessageEl.style.color = 'red';
+                messageBox.classList.remove('bg-purple-50', 'bg-green-100');
+                messageBox.classList.add('bg-red-100');
+            }
+            
+            updateBlankStats();
+
+            // Prepare for next round
+            blankCurrentRound++; 
+
+            // Remove flash effect quickly
+            setTimeout(() => {
+                messageBox.classList.remove('bg-green-100', 'bg-red-100');
+                messageBox.classList.add('bg-purple-50');
+            }, 500);
+        }
+
+        function nextBlankQuestion() {
+            // Only proceed if current round is checked (input is disabled)
+            if (blankInputEl.disabled) {
+                loadBlankQuestion();
+            }
+        }
+
+        function endFillInBlanksGame() {
+            blankSentenceEl.innerHTML = `<p class="text-2xl font-bold text-purple-700">🎉 Hoàn thành bài Điền Từ!</p>`;
+            blankInputEl.classList.add('hidden');
+            blankCheckBtn.classList.add('hidden');
+            blankMessageEl.textContent = `Điểm cuối cùng của bạn: ${blankScore}`;
+            blankMessageEl.style.color = '#5b21b6';
+            blankNextBtn.textContent = 'Chơi Lại';
+            blankNextBtn.onclick = initFillInBlanks;
+        }
+
+        blankCheckBtn.addEventListener('click', checkBlankAnswer);
+        blankNextBtn.addEventListener('click', nextBlankQuestion);
+        blankInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (blankInputEl.disabled) {
+                    nextBlankQuestion();
+                } else {
+                    checkBlankAnswer();
+                }
+            }
+        });
+
+        // END: Logic cho Bài Điền Từ
+
+
+        // START: Logic cho Bài Xếp Chữ (Tetris/Falling Letters)
+        // ====================================================================================================
+
+        function drawGrid() {
+            gameArea.innerHTML = '';
+            
+            // Set up grid container style 
+            gameArea.style.cssText = `
+                display: grid;
+                grid-template-columns: repeat(${GRID_WIDTH}, 1fr);
+                grid-template-rows: repeat(${GRID_HEIGHT}, 1fr);
+                width: 90vw;
+                max-width: 300px;
+                height: 90vw;
+                max-height: 300px;
+                margin: 0 auto;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 4px solid #1f2937;
+                background-color: #f0f0f0;
+            `;
+
+            // Draw all cells (empty, locked, or falling)
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const cell = document.createElement("div");
+                    cell.className = "grid-cell";
+                    
+                    // 1. Find the content for this cell
+                    let blockContent = null;
+                    
+                    // a. Draw Locked Blocks
+                    const lockedBlock = lockedBlocks.find(b => b.x === x && b.y === y);
+                    if (lockedBlock) {
+                        const isUsed = lockedBlock.isUsed ? 'true' : 'false';
+                        // Blocks not required (distractors) are drawn slightly dimmer and are not clickable
+                        const opacity = lockedBlock.isRequired ? '1' : '0.6';
+                        const pointerEvents = lockedBlock.isRequired ? 'auto' : 'none';
+
+                        blockContent = `<div 
+                            class="letter-block locked" 
+                            data-id="${lockedBlock.id}" 
+                            data-used="${isUsed}" 
+                            style="background-color: ${lockedBlock.color}; opacity: ${opacity}; pointer-events: ${pointerEvents};"
+                            >
+                            ${lockedBlock.letter}
+                            </div>`;
+                    } 
+                    // b. Draw Falling Block
+                    else if (currentBlock && currentBlock.x === x && currentBlock.y === y) {
+                        blockContent = `<div class="letter-block falling" style="background-color: ${currentBlock.color};">${currentBlock.letter}</div>`;
+                    }
+
+                    if (blockContent) {
+                        cell.innerHTML = blockContent;
+                        // Add click listener only to the actual letter block
+                        if (lockedBlock && lockedBlock.isRequired) {
+                           cell.firstChild.addEventListener('click', handleGridBlockClick);
+                        }
+                    }
+
+                    gameArea.appendChild(cell);
+                }
+            }
+        }
+
+        function checkCollision(x, y) {
+            // Check boundaries
+            if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
+                return true; // Collision with wall/floor
+            }
+            // Check locked blocks
+            if (lockedBlocks.some(b => b.x === x && b.y === y)) {
+                return true; // Collision with another block
+            }
+            return false;
+        }
+
+        // NEW: Function to spawn a block (random or required)
+        function spawnNewBlock() {
+            const allRequiredSpawned = requiredLettersIndex >= currentWordLetters.length;
+            
+            let letter;
+            let color;
+            let isRequired;
+            
+            // Spawn a required letter if available AND random chance is met (e.g., 60%)
+            // or if we haven't spawned the first two required letters yet (to ensure the word is possible)
+            const spawnRequired = !allRequiredSpawned && (Math.random() < 0.6 || requiredLettersIndex < 2);
+
+            if (spawnRequired) {
+                letter = currentWordLetters[requiredLettersIndex];
+                color = colors[requiredLettersIndex % colors.length]; // Color based on required index
+                isRequired = true;
+                requiredLettersIndex++;
+            } else {
+                // Spawn a distractor letter
+                const randomIndex = Math.floor(Math.random() * distractorLetters.length);
+                letter = distractorLetters[randomIndex];
+                color = colors[Math.floor(Math.random() * colors.length)]; // Random vibrant color
+                isRequired = false;
+            }
+            
+            // Randomize starting column
+            const startX = Math.floor(Math.random() * GRID_WIDTH);
+            
+            currentBlock = {
+                letter: letter,
+                x: startX,
+                y: 0,
+                color: color,
+                isRequired: isRequired 
             };
+
+            // Check for game over (spawn location already occupied)
+            if (checkCollision(currentBlock.x, currentBlock.y)) {
+                if (currentBlock.isRequired) {
+                     // Game Over (required block couldn't spawn)
+                    message.textContent = "KHÔNG GIAN ĐÃ HẾT. Hoàn thành từ!";
+                    message.style.color = "red";
+                    checkBtnWordPuzzle.disabled = false;
+                    currentBlock = null;
+                    clearInterval(wordPuzzleInterval); // Stop game loop
+                    drawGrid();
+                    return null;
+                } else {
+                    // Distractor block collided immediately, skip it and try again
+                    currentBlock = null;
+                    return spawnNewBlock(); 
+                }
+            }
+
+            drawGrid();
+            return currentBlock;
+        }
+
+
+        function moveBlock(dx, dy) {
+            if (!currentBlock) return;
+
+            const newX = currentBlock.x + dx;
+            const newY = currentBlock.y + dy;
+
+            if (!checkCollision(newX, newY)) {
+                currentBlock.x = newX;
+                currentBlock.y = newY;
+                drawGrid();
+                return true;
+            }
+            return false;
+        }
+
+        function lockBlock() {
+            if (!currentBlock) return;
+
+            blockIdCounter++;
+            lockedBlocks.push({
+                id: blockIdCounter,
+                letter: currentBlock.letter,
+                x: currentBlock.x,
+                y: currentBlock.y,
+                color: currentBlock.color,
+                isUsed: false,
+                isRequired: currentBlock.isRequired // Persist the required status
+            });
             
+            currentBlock = null;
+            checkLineClear();
+
+            // Next block will be spawned by autoDrop on the next interval
+        }
+
+        function checkLineClear() {
+            let linesCleared = 0;
+            
+            for (let y = GRID_HEIGHT - 1; y >= 0; y--) {
+                // Check if the current row is full (contains GRID_WIDTH locked blocks)
+                const rowBlocks = lockedBlocks.filter(b => b.y === y);
+                if (rowBlocks.length === GRID_WIDTH) {
+                    linesCleared++;
+                    // Remove blocks from the cleared row
+                    lockedBlocks = lockedBlocks.filter(b => b.y !== y);
+                } else if (linesCleared > 0) {
+                    // Shift blocks above the cleared lines down
+                    lockedBlocks.forEach(b => {
+                        if (b.y < y) {
+                            b.y += linesCleared;
+                        }
+                    });
+                }
+            }
+            
+            if (linesCleared > 0) {
+                successSound.play(); 
+                message.textContent = `Tuyệt vời! Đã dọn ${linesCleared} hàng.`;
+                message.style.color = 'green';
+                drawGrid();
+            }
+        }
+
+        function autoDrop() {
+            if (!currentBlock) {
+                // Try to spawn a new block every interval
+                spawnNewBlock(); 
+                drawGrid(); 
+                return;
+            }
+            
+            // Try to move down
+            if (moveBlock(0, 1)) {
+                // Still falling
+                dropSound.play(); // Optional sound for movement
+            } else {
+                // Hit the bottom or another block
+                lockBlock();
+            }
+            drawGrid();
+        }
+
+        // Drop Zone Interaction Logic 
+
+        function handleGridBlockClick(event) {
+            const clickedBlockElement = event.currentTarget;
+            const blockId = parseInt(clickedBlockElement.getAttribute('data-id'));
+            const block = lockedBlocks.find(b => b.id === blockId);
+
+            // Check if the block is a required letter and not already used
+            if (!block || !block.isRequired || block.isUsed || clickedBlockElement.getAttribute('data-used') === 'true') {
+                 if (block && !block.isRequired) {
+                    message.textContent = "Chỉ được chọn những chữ cái cần thiết (màu đậm)!";
+                    message.style.color = "red";
+                 }
+                 return; 
+            }
+
+            const letter = block.letter;
+            const dropSlots = Array.from(dropZone.children);
+            let targetSlot = null;
+
+            // Find the first empty slot
+            for (const slot of dropSlots) {
+                if (slot.textContent === "") {
+                    targetSlot = slot;
+                    break;
+                }
+            }
+
+            if (targetSlot) {
+                // Update slot
+                targetSlot.textContent = letter;
+                targetSlot.style.backgroundColor = block.color;
+                targetSlot.style.color = '#fff';
+                targetSlot.setAttribute('data-original-id', block.id);
+
+                // Update block state in grid
+                block.isUsed = true;
+                // We let drawGrid handle the visual update of the clicked block
+                
+                message.textContent = '';
+                resetBtn.style.display = 'inline-block';
+                dropSound.play();
+                drawGrid(); // Redraw grid to update visual state of the clicked block
+            } else {
+                message.textContent = "Vùng ghép chữ đã đầy.";
+                message.style.color = "orange";
+            }
+        }
+
+        function handleDropSlotClear(event) {
+            const clickedSlot = event.target;
+            const originalTileId = parseInt(clickedSlot.getAttribute('data-original-id'));
+            
+            if (!originalTileId || clickedSlot.textContent === "") return;
+
+            // Find the original locked block in the grid
+            const originalBlock = lockedBlocks.find(b => b.id === originalTileId);
+            
+            if (originalBlock) {
+                // Restore block state in grid
+                originalBlock.isUsed = false;
+            }
+            
+            // Clear slot
+            clickedSlot.textContent = "";
+            clickedSlot.style.backgroundColor = "";
+            clickedSlot.style.color = "#333";
+            clickedSlot.removeAttribute('data-original-id');
+            message.textContent = '';
+            
+            // Hide reset button if no letters left
+            const formedWord = Array.from(dropZone.children).map(slot => slot.textContent).join('');
+            if (formedWord === '') {
+                 resetBtn.style.display = 'none';
+            }
+            drawGrid(); // Redraw grid to update visual state of the restored block
+        }
+
+        // Input Handlers (Touch focused)
+        function handleTouchStart(e) {
+            if (!wordPuzzleInterval) return; // Ignore if game is stopped
+            if (e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!touchStartX || !currentBlock || e.touches.length === 0 || !wordPuzzleInterval) return;
+            
+            const touchEndX = e.touches[0].clientX;
+            const touchEndY = e.touches[0].clientY;
+            
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            
+            const threshold = 20;
+
+            if (Math.abs(dx) > threshold && Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal swipe (move left/right)
+                moveBlock(dx > 0 ? 1 : -1, 0);
+                touchStartX = touchEndX; // Reset starting position for continuous movement
+                e.preventDefault();
+            } else if (dy > threshold * 2 && dy > Math.abs(dx)) { 
+                // Vertical swipe (fast drop)
+                while(moveBlock(0, 1));
+                lockBlock();
+                touchStartX = 0; // Disable further checks until next touch start
+                e.preventDefault();
+            }
+        }
+        
+        // The main initialization function
+        function initWordPuzzleTetris() {
+            // Clear previous game state
+            clearInterval(wordPuzzleInterval); 
+            currentBlock = null;
+            lockedBlocks = [];
+            blockIdCounter = 0;
+            requiredLettersIndex = 0; // Reset index for tracking
+
+            // Filter and select a word
+            const validWords = vocabularyData[currentUnit].filter(item => item.word.length >= 4 && item.word.length <= GRID_WIDTH);
+            if (validWords.length === 0) {
+                message.textContent = "Không có từ vựng hợp lệ (4-10 chữ cái) trong Unit này.";
+                message.style.color = "orange";
+                info.textContent = "";
+                dropZone.innerHTML = "";
+                gameArea.innerHTML = "";
+                checkBtnWordPuzzle.disabled = true;
+                return;
+            }
+
+            currentWordPuzzle = validWords[Math.floor(Math.random() * validWords.length)];
+            currentWordLetters = currentWordPuzzle.word.toUpperCase().split(''); 
+
+            info.textContent = `Nghĩa: ${currentWordPuzzle.definition} (${currentWordLetters.length} chữ cái)`;
+            message.textContent = "Xếp các khối chữ để tạo từ!";
+            message.style.color = "blue";
+            checkBtnWordPuzzle.disabled = true;
+            resetBtn.style.display = 'none';
+
+            // 1. Setup Drop Zone
+            dropZone.innerHTML = '';
+            for (let i = 0; i < currentWordLetters.length; i++) {
+                const dropSlot = document.createElement("div");
+                dropSlot.className = "dropSlot-word-puzzle";
+                dropSlot.setAttribute('data-index', i);
+                dropSlot.addEventListener('click', handleDropSlotClear); 
+                dropZone.appendChild(dropSlot);
+            }
+            
+            // 2. Setup Game Grid
+            drawGrid(); // Initial empty draw
+
+            // 3. Start Game Loop
+            spawnNewBlock(); // Spawn the first block
+            wordPuzzleInterval = setInterval(autoDrop, DROP_INTERVAL);
+            
+            // 4. Attach Touch Listeners to the game area
+            gameArea.removeEventListener('touchstart', handleTouchStart);
+            gameArea.removeEventListener('touchmove', handleTouchMove);
+            gameArea.addEventListener('touchstart', handleTouchStart);
+            gameArea.addEventListener('touchmove', handleTouchMove, { passive: false }); 
+        }
+
+        // HÀM XỬ LÝ NÚT KIỂM TRA
+        checkBtnWordPuzzle.addEventListener("click",()=>{
+            const formedWord=Array.from(dropZone.children).map(slot=>slot.textContent.toLowerCase()).join('');
+            if(formedWord.length !== currentWordPuzzle.word.length) {
+                message.textContent="Bạn chưa xếp đủ số chữ cái!";
+                message.style.color="orange";
+                return;
+            }
+            if(formedWord===currentWordPuzzle.word.toLowerCase()){
+                message.textContent="Chính xác! 🎉";
+                message.style.color="green";
+                successSound.play(); 
+                checkBtnWordPuzzle.disabled = true;
+                resetBtn.style.display = "none";
+                clearInterval(wordPuzzleInterval); // Stop game loop
+                // Mark all required blocks as used (dim them)
+                lockedBlocks.forEach(block => {
+                    if (block.isRequired && !block.isUsed) block.isUsed = true;
+                });
+                drawGrid();
+                setTimeout(initWordPuzzleTetris, 3000); // Chơi từ tiếp theo
+            } else {
+                message.textContent="Sai rồi, thử lại! ❌";
+                message.style.color="red";
+                // Cho phép reset khu vực xếp chữ
+                resetBtn.style.display="inline-block";
+            }
+        });
+
+        // HÀM XỬ LÝ NÚT RESET
+        resetBtn.addEventListener("click", () => {
+            // Dọn sạch các ô đã ghép
+            Array.from(dropZone.children).forEach(slot => {
+                const originalId = parseInt(slot.getAttribute('data-original-id'));
+                if (originalId) {
+                    const originalBlock = lockedBlocks.find(b => b.id === originalId);
+                    if (originalBlock) {
+                        originalBlock.isUsed = false;
+                    }
+                    slot.textContent = "";
+                    slot.style.backgroundColor = "";
+                    slot.style.color = "#333";
+                    slot.removeAttribute('data-original-id');
+                }
+            });
+            message.textContent = "";
+            resetBtn.style.display = "none";
+            drawGrid();
+        });
+        // END: Logic cho Bài Xếp Chữ
+
+
+        // Gán sự kiện cho các nút Unit
+        unitButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                selectUnit(button.dataset.unit);
+            });
+        });
+
+        // Gán sự kiện cho các nút Tab
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                switchTab(button.dataset.tab);
+            });
+        });
+
+        // Gán sự kiện cho các nút Sub-Tab
+        document.querySelectorAll('.practice-sub-tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                switchPracticeSubTab(button.dataset.practiceTab);
+            });
+        });
+
+        // Khởi chạy game khi tải trang
+        window.onload = () => {
             // Chọn Unit 1 và Tab Flashcard khi tải trang
             selectUnit('unit-1');
             switchTab('flashcard');
-        };
+        }
     </script>
 </body>
 </html>
