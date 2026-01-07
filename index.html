@@ -58,9 +58,9 @@
         /* --- APP UI COMPONENTS --- */
         .glass-panel {
             background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(12px);
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            border: 5px solid rgba(255, 255, 255, 0.8);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
@@ -113,7 +113,7 @@
         /* Game Elements */
         .quiz-option { transition: all 0.2s; cursor: pointer; border: 3px solid #e2e8f0; padding: 16px; border-radius: 20px; background: white; font-weight: 700; color: #475569; position: relative; overflow: hidden; box-shadow: 0 4px 0 #e2e8f0; }
         .quiz-option:hover { border-color: #60a5fa; background: #eff6ff; transform: translateY(-2px); box-shadow: 0 6px 0 #bfdbfe; color: #2563eb; }
-        .quiz-option:active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
+        .quiz-option.active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
         .quiz-option.correct { background: #dcfce7; border-color: #22c55e; color: #15803d; box-shadow: 0 4px 0 #86efac; }
         .quiz-option.incorrect { background: #fee2e2; border-color: #ef4444; color: #991b1b; box-shadow: 0 4px 0 #fca5a5; }
         
@@ -192,39 +192,39 @@
 <body class="min-h-screen pb-10">
 
     <!-- === WELCOME SCREEN === -->
-    <div id="welcome-screen" class="flex items-center justify-center p-4 text-center text-white">
-        <div class="max-w-4xl">
-            <div class="mb-6 inline-block p-5 bg-white/10 rounded-3xl backdrop-blur-xl animate-bounce shadow-2xl border border-white/20">
-                <i class="fas fa-book-reader text-7xl text-yellow-400"></i>
+    <div id="welcome-screen" class="flex items-center justify-center p-2 text-center text-white overflow-y-auto">
+        <div class="max-w-4xl w-full">
+            <div class="mb-2 md:mb-6 inline-block p-3 md:p-5 bg-white/10 rounded-3xl backdrop-blur-xl animate-bounce shadow-2xl border border-white/20">
+                <i class="fas fa-book-reader text-3xl md:text-7xl text-yellow-400"></i>
             </div>
-            <h1 class="text-5xl md:text-8xl font-black mb-4 tracking-tighter drop-shadow-lg">
+            <h1 class="text-3xl md:text-8xl font-black mb-1 md:mb-4 tracking-tighter drop-shadow-lg">
                 CORE<span class="text-yellow-400">VOCAB</span>
             </h1>
-            <p class="text-2xl md:text-3xl mb-12 text-blue-100 font-bold max-w-2xl mx-auto leading-relaxed">
-                NỀN TẢNG SỐ TỪ VỰNG TIẾNG ANH THPT.
+            <p class="text-xs md:text-3xl mb-4 md:mb-12 text-blue-100 font-bold max-w-2xl mx-auto leading-relaxed">
+                NỀN TẢNG SỐ TỪ VỰNG TIẾNG ANH THPT
             </p>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="bg-white/10 p-6 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all transform hover:-translate-y-2">
-                    <i class="fas fa-list-check text-4xl mb-4 text-yellow-400"></i>
-                    <h3 class="font-bold text-xl mb-2">Hệ Thống Unit</h3>
-                    <p class="text-sm text-blue-100 opacity-90">Bám sát chương trình sách giáo khoa mới nhất.</p>
+            <div class="grid grid-cols-3 gap-2 md:gap-6 mb-4 md:mb-12">
+                <div class="bg-white/10 p-2 md:p-6 rounded-xl md:rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all transform hover:-translate-y-2 flex flex-col items-center justify-start md:justify-center">
+                    <i class="fas fa-list-check text-lg md:text-4xl mb-1 md:mb-4 text-yellow-400"></i>
+                    <h3 class="font-bold text-[10px] md:text-xl mb-1 md:mb-2 leading-tight">Hệ Thống Unit</h3>
+                    <p class="text-[9px] md:text-sm text-blue-100 opacity-90 leading-tight">Bám sát chương trình bộ SGK KẾT NỐI TRI THỨC VỚI CUỘC SỐNG - bộ SGK được BGD chọn sử dụng thống nhất toàn quốc từ năm học 2026-2027.</p>
                 </div>
-                <div class="bg-white/10 p-6 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all transform hover:-translate-y-2">
-                    <i class="fas fa-bolt text-4xl mb-4 text-yellow-400"></i>
-                    <h3 class="font-bold text-xl mb-2">Thẻ từ vựng</h3>
-                    <p class="text-sm text-blue-100 opacity-90">Ghi nhớ từ vựng nhanh chóng.</p>
+                <div class="bg-white/10 p-2 md:p-6 rounded-xl md:rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all transform hover:-translate-y-2 flex flex-col items-center justify-start md:justify-center">
+                    <i class="fas fa-bolt text-lg md:text-4xl mb-1 md:mb-4 text-yellow-400"></i>
+                    <h3 class="font-bold text-[10px] md:text-xl mb-1 md:mb-2 leading-tight">Thẻ từ vựng</h3>
+                    <p class="text-[9px] md:text-sm text-blue-100 opacity-90 leading-tight">Ghi nhớ từ vựng nhanh chóng qua các thẻ chứa đầy đủ ví dụ.</p>
                 </div>
-                <div class="bg-white/10 p-6 rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all transform hover:-translate-y-2">
-                    <i class="fas fa-gamepad text-4xl mb-4 text-yellow-400"></i>
-                    <h3 class="font-bold text-xl mb-2">Luyện Tập</h3>
-                    <p class="text-sm text-blue-100 opacity-90">Nhiều loại bài tập để kiểm tra kiến thức đã học được.</p>
+                <div class="bg-white/10 p-2 md:p-6 rounded-xl md:rounded-2xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all transform hover:-translate-y-2 flex flex-col items-center justify-start md:justify-center">
+                    <i class="fas fa-book-open text-lg md:text-4xl mb-1 md:mb-4 text-yellow-400"></i>
+                    <h3 class="font-bold text-[10px] md:text-xl mb-1 md:mb-2 leading-tight">Luyện Tập</h3>
+                    <p class="text-[9px] md:text-sm text-blue-100 opacity-90 leading-tight">Nhiều loại bài tập thú vị để kiểm tra kiến thức.</p>
                 </div>
             </div>
 
-            <button onclick="startApp()" class="group relative px-16 py-5 bg-yellow-400 hover:bg-white text-blue-900 font-black text-2xl rounded-2xl transition-all transform hover:scale-110 shadow-[0_20px_50px_rgba(234,179,8,0.4)]">
+            <button onclick="startApp()" class="group relative px-6 py-3 md:px-16 md:py-5 bg-yellow-400 hover:bg-white text-blue-900 font-black text-base md:text-2xl rounded-2xl transition-all transform hover:scale-110 shadow-[0_20px_50px_rgba(234,179,8,0.4)]">
                 BẮT ĐẦU HỌC
-                <i class="fas fa-play-circle ml-3 group-hover:rotate-12 transition-transform"></i>
+                <i class="fas fa-play-circle ml-2 md:ml-3 group-hover:rotate-12 transition-transform"></i>
             </button>
             
         </div>
@@ -232,6 +232,11 @@
 
     <!-- === MAIN APP CONTAINER === -->
     <div id="app-container">
+        <!-- Back to Home Button -->
+        <button onclick="backToHome()" class="fixed top-4 left-4 z-50 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md rounded-full shadow-xl flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-white transition-all transform hover:scale-110 border border-white/50 group">
+            <i class="fas fa-home text-lg md:text-xl group-hover:scale-110 transition-transform"></i>
+        </button>
+
         <div class="max-w-6xl mx-auto p-4 md:p-6 lg:p-8">
             <header class="text-center mb-10 relative">
                 <h1 class="text-5xl md:text-6xl font-black tracking-tight mb-3 drop-shadow-sm">
@@ -271,7 +276,7 @@
                     <i class="fas fa-comments mr-2"></i>Hội thoại
                 </button>
                 <button class="tab-button flex-1 py-4 font-bold text-gray-500 hover:bg-white/50 rounded-xl transition" data-tab="practice">
-                    <i class="fas fa-gamepad mr-2"></i>Luyện tập
+                    <i class="fas fa-book mr-2"></i>Luyện tập
                 </button>
             </div>
 
@@ -508,6 +513,16 @@
                 </div>
             </div>
         </div>
+
+        <footer class="bg-blue-900 text-blue-50 py-6 mt-20 border-t-4 border-yellow-400">
+            <div class="container mx-auto text-center space-y-2">
+            <div class="container mx-auto text-center space-y-2">
+                <p class="font-bold uppercase text-sm md:text-base tracking-wider">CoreVocab - Nền tảng số từ vựng Tiếng Anh THPT</p>
+                <p class="text-xs md:text-sm font-medium">Email: anhtuanp384@gmail.com</p>
+                <p class="text-xs md:text-sm font-medium">Điện thoại: 0853 065 878</p>
+                <p class="text-[10px] md:text-xs opacity-75">© Phạm Anh Tuấn - Trường THCS&THPT Ba Hòn - Tỉnh An Giang</p>
+            </div>
+        </footer>
     </div>
 
     <!-- === RESULTS MODAL === -->
@@ -550,7 +565,16 @@
             app.classList.add('app-visible');
         }
 
-        // --- VOCABULARY DATA & APP LOGIC ---
+        function backToHome() {
+            const welcome = document.getElementById('welcome-screen');
+            const app = document.getElementById('app-container');
+            
+            app.classList.remove('app-visible');
+            welcome.classList.remove('welcome-hidden');
+        }
+
+        // --- VOCABULARY DATA (Abbreviated for code clarity as requested) ---
+        // NOTE: Please replace this structure with the full vocabulary data to restore complete functionality.
         const allVocabData = {
           "10": {
             "unit-1": {
@@ -1641,56 +1665,148 @@
                         <i class="fas ${line.gender === 'female' ? 'fa-venus bg-pink-100 p-1 rounded-full' : 'fa-mars bg-blue-100 p-1 rounded-full'} text-xs w-5 h-5 flex items-center justify-center"></i> 
                         ${line.speaker}
                     </span>
-                    <p class="text-gray-800 font-bold text-lg leading-relaxed ml-2">${line.text}</p>
-                    ${line.trans ? `<div class="mt-3 pt-2 border-t border-gray-100 ml-2">
+                    <div class="flex justify-between items-start gap-3">
+                        <p class="text-gray-800 font-bold text-lg leading-relaxed ml-2 flex-1">${line.text}</p>
+                        <button onclick="speakSingleDialogueLine('${line.text.replace(/'/g, "\\'")}', '${line.gender}')" class="shrink-0 w-9 h-9 rounded-full bg-black/5 hover:bg-black/10 text-gray-500 hover:text-gray-800 flex items-center justify-center transition mt-1" aria-label="Nghe câu này">
+                            <i class="fas fa-volume-up text-sm"></i>
+                        </button>
+                    </div>
+                    ${line.trans ? `<div class="mt-2 pt-2 border-t border-gray-100 ml-2">
                         <p class="text-gray-500 text-sm italic font-medium"><i class="fas fa-language mr-1 opacity-50"></i> ${line.trans}</p>
                     </div>` : ''}
                 </div>
             `).join('');
         }
 
-        function speakDialogue() {
-            const dialogue = allVocabData[currentGrade][currentUnit].dialogue || [];
-            if(dialogue.length === 0) return;
+        // --- IMPROVED VOICE LOGIC ---
+        function speakSingleDialogueLine(text, gender) {
+            window.speechSynthesis.cancel();
+            
             let voices = window.speechSynthesis.getVoices();
-            const getVoice = (gender) => {
-                const isMale = gender === 'male';
-                const maleKeywords = ['male'];
-                const femaleKeywords = ['female'];
-                const enVoices = voices.filter(v => v.lang.startsWith('en'));
-                if (enVoices.length === 0) return voices[0]; 
-                let found = enVoices.find(v => {
-                    const name = v.name.toLowerCase();
-                    return (isMale ? maleKeywords : femaleKeywords).some(k => name.includes(k));
-                });
-                if (!found) {
-                     if (enVoices.length > 1) return isMale ? (enVoices[1] || enVoices[0]) : enVoices[0];
-                     return enVoices[0];
-                }
-                return found;
-            };
-            let maleVoice = getVoice('male');
-            let femaleVoice = getVoice('female');
-            if (maleVoice && femaleVoice && maleVoice.name === femaleVoice.name) {
-                const enVoices = voices.filter(v => v.lang.startsWith('en'));
-                if (enVoices.length >= 2) {
-                    femaleVoice = enVoices[0];
-                    maleVoice = enVoices[1];
+            if (voices.length === 0) return;
+
+            const msg = new SpeechSynthesisUtterance(text);
+            
+            // Logic chọn giọng giống hệt speakDialogue
+            const isMale = gender === 'male';
+            let enVoices = voices.filter(v => v.lang.includes('en'));
+            if (enVoices.length === 0) enVoices = voices;
+
+            const maleKeywords = ["david", "daniel", "mark", "james", "male", "microsoft david"];
+            const femaleKeywords = ["zira", "samantha", "linda", "female", "google us english", "microsoft zira"];
+
+            let selectedVoice = enVoices.find(v => {
+                const name = v.name.toLowerCase();
+                return isMale ? maleKeywords.some(k => name.includes(k)) : femaleKeywords.some(k => name.includes(k));
+            });
+
+            if (!selectedVoice) selectedVoice = enVoices[0];
+
+            let pitch = 1.0;
+            let rate = 0.95;
+            
+            if (selectedVoice) {
+                const voiceName = selectedVoice.name.toLowerCase();
+                const voiceIsLikelyFemale = femaleKeywords.some(k => voiceName.includes(k)) || voiceName.includes("google us english");
+                const voiceIsLikelyMale = maleKeywords.some(k => voiceName.includes(k));
+
+                if (isMale) {
+                    if (voiceIsLikelyFemale && !voiceIsLikelyMale) pitch = 0.8; 
+                } else {
+                    if (voiceIsLikelyMale && !voiceIsLikelyFemale) pitch = 1.2;
                 }
             }
+
+            msg.voice = selectedVoice;
+            msg.pitch = pitch;
+            msg.rate = rate;
+            msg.lang = 'en-US';
+
+            window.speechSynthesis.speak(msg);
+        }
+
+        function speakDialogue() {
+            const dialogue = allVocabData[currentGrade][currentUnit].dialogue || [];
+            if (dialogue.length === 0) return;
+
             window.speechSynthesis.cancel();
+            
+            // Ensure voices are available
+            let voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                 // Retry quickly if voices are not yet loaded
+                 setTimeout(speakDialogue, 100);
+                 return;
+            }
+
+            // Helper to find best voice and pitch config
+            const getVoiceConfig = (gender) => {
+                const isMale = gender === 'male';
+                const lang = 'en-US';
+
+                // Filter for English voices first
+                let enVoices = voices.filter(v => v.lang.includes('en'));
+                if (enVoices.length === 0) enVoices = voices;
+
+                // Keywords to identify gender in voice names
+                const maleKeywords = ["david", "daniel", "mark", "james", "male", "microsoft david"];
+                const femaleKeywords = ["zira", "samantha", "linda", "female", "google us english", "microsoft zira"];
+
+                // Try to find a voice matching the gender keywords
+                let selectedVoice = enVoices.find(v => {
+                    const name = v.name.toLowerCase();
+                    return isMale ? maleKeywords.some(k => name.includes(k)) : femaleKeywords.some(k => name.includes(k));
+                });
+
+                // Fallback: if no specific gendered voice found, use the first available English voice
+                if (!selectedVoice) selectedVoice = enVoices[0];
+
+                // PITCH ADJUSTMENT STRATEGY
+                // If the voice found doesn't inherently match the requested gender (e.g. using a female voice for a male role),
+                // we artificially shift the pitch.
+                let pitch = 1.0;
+                let rate = 0.95; // Slightly slower for clarity
+                
+                if (selectedVoice) {
+                    const voiceName = selectedVoice.name.toLowerCase();
+                    // Check if the selected voice is widely known to be female/neutral (like Google US English)
+                    const voiceIsLikelyFemale = femaleKeywords.some(k => voiceName.includes(k)) || voiceName.includes("google us english");
+                    const voiceIsLikelyMale = maleKeywords.some(k => voiceName.includes(k));
+
+                    if (isMale) {
+                        // If we need male but have a likely female voice, lower the pitch
+                        if (voiceIsLikelyFemale && !voiceIsLikelyMale) {
+                            pitch = 0.8; 
+                        }
+                    } else {
+                        // If we need female but have a likely male voice, raise the pitch slightly
+                        if (voiceIsLikelyMale && !voiceIsLikelyFemale) {
+                            pitch = 1.2;
+                        }
+                    }
+                }
+
+                return { voice: selectedVoice, pitch, rate };
+            };
+
             let chainSpeech = (index) => {
                 if (index >= dialogue.length) return;
                 const line = dialogue[index];
+                
                 const msg = new SpeechSynthesisUtterance(line.text);
+                const config = getVoiceConfig(line.gender);
+
+                if (config.voice) msg.voice = config.voice;
+                msg.pitch = config.pitch;
+                msg.rate = config.rate;
                 msg.lang = 'en-US';
-                msg.rate = 0.9;
-                msg.voice = line.gender === 'female' ? femaleVoice : maleVoice;
-                if (!msg.voice && voices.length > 0) msg.voice = voices[0];
+
                 msg.onend = () => { setTimeout(() => chainSpeech(index + 1), 400); };
                 msg.onerror = (e) => { console.error("Speech error", e); chainSpeech(index + 1); };
+                
                 window.speechSynthesis.speak(msg);
             };
+
             chainSpeech(0);
         }
 
