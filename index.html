@@ -281,8 +281,8 @@
                 </button>
             </div>
 
-            <div id="main-content" class="glass-panel p-6 md:p-10 rounded-b-3xl rounded-tr-3xl min-h-[600px] relative border-t-0 bg-white/80">
-                <h2 id="display-title" class="text-2xl md:text-3xl font-extrabold text-center text-gray-800 mb-10"></h2>
+            <div id="main-content" class="glass-panel p-6 md:p-10 rounded-b-3xl rounded-tr-3xl min-h-[700px] relative border-t-0 bg-white/80">
+                <h2 id="display-title" class="text-4xl md:text-3xl font-extrabold text-center text-blue-700 mb-10"></h2>
                 
                 <div id="flashcard-section" class="tab-content">
                     <div class="flashcard-container max-w-xl mx-auto">
@@ -310,7 +310,7 @@
                                 <div class="flex flex-col justify-center items-center h-full w-full">
                                     <div class="mb-6">
                                         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Định nghĩa</p>
-                                        <p id="fc-def" class="text-2xl md:text-4xl font-black text-gray-800 leading-tight"></p>
+                                        <p id="fc-def" class="text-4xl md:text-6xl font-black text-indigo-600 leading-tight"></p>
                                     </div>
 
                                     <div class="w-16 h-1 bg-gray-200 rounded-full mb-6"></div>
@@ -329,7 +329,7 @@
                     </div>
                     <div class="flex justify-center items-center gap-6 mt-12">
                         <button id="fc-prev" class="w-16 h-16 rounded-full bg-white text-gray-400 hover:text-gray-800 hover:shadow-lg transition shadow-md flex items-center justify-center text-2xl border border-gray-100"><i class="fas fa-arrow-left"></i></button>
-                        <button id="fc-flip" class="px-12 py-5 rounded-2xl bg-gray-800 text-white font-bold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transform transition active:scale-95 flex items-center gap-2">
+                        <button id="fc-flip" class="px-12 py-5 rounded-3xl bg-purple-500 text-white font-extrabold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transform transition active:scale-95 flex items-center gap-2">
                             <i class="fas fa-sync-alt"></i> LẬT THẺ
                         </button>
                         <button id="fc-next" class="w-16 h-16 rounded-full bg-white text-gray-400 hover:text-gray-800 hover:shadow-lg transition shadow-md flex items-center justify-center text-2xl border border-gray-100"><i class="fas fa-arrow-right"></i></button>
@@ -376,53 +376,53 @@
 
                     <div id="practice-menu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
                         <!-- Quiz Card -->
-                        <div onclick="switchPracticeMode('quiz')" class="game-card bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-gray-100">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 transition group-hover:bg-emerald-200"></div>
-                            <div class="icon-box w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 mb-6 relative z-10 shadow-sm border border-emerald-100">
+                        <div onclick="switchPracticeMode('quiz')" class="game-card bg-white hover:bg-emerald-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-emerald-400 transition-all duration-300">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500 rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 transition group-hover:bg-emerald-600 group-hover:scale-110"></div>
+                            <div class="icon-box w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-700 mb-6 relative z-10 shadow-sm border border-emerald-300 group-hover:bg-emerald-200 group-hover:text-emerald-800">
                                 <i class="fas fa-question text-3xl"></i>
                             </div>
-                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10">Trắc Nghiệm</h3>
-                            <p class="text-sm text-gray-500 font-medium relative z-10">Chọn đáp án đúng từ 4 lựa chọn.</p>
+                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10 group-hover:text-emerald-900 transition-colors">Trắc Nghiệm</h3>
+                            <p class="text-sm text-gray-500 font-bold relative z-10 group-hover:text-emerald-800">Chọn đáp án đúng từ 4 lựa chọn.</p>
                         </div>
 
                         <!-- Matching Card -->
-                        <div onclick="switchPracticeMode('matching')" class="game-card bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-gray-100">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-amber-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 transition group-hover:bg-amber-200"></div>
-                            <div class="icon-box w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 mb-6 relative z-10 shadow-sm border border-amber-100">
+                        <div onclick="switchPracticeMode('matching')" class="game-card bg-white hover:bg-amber-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-amber-400 transition-all duration-300">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500 rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 transition group-hover:bg-amber-600 group-hover:scale-110"></div>
+                            <div class="icon-box w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-700 mb-6 relative z-10 shadow-sm border border-amber-300 group-hover:bg-amber-200 group-hover:text-amber-800">
                                 <i class="fas fa-puzzle-piece text-3xl"></i>
                             </div>
-                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10">Ghép Từ</h3>
-                            <p class="text-sm text-gray-500 font-medium relative z-10">Nối từ vựng đúng với định nghĩa tương ứng.</p>
+                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10 group-hover:text-amber-900 transition-colors">Ghép Từ</h3>
+                            <p class="text-sm text-gray-500 font-bold relative z-10 group-hover:text-amber-800">Nối từ vựng đúng với định nghĩa tương ứng.</p>
                         </div>
 
                         <!-- Listening Card -->
-                        <div onclick="switchPracticeMode('listening')" class="game-card bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-gray-100">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-sky-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 transition group-hover:bg-sky-200"></div>
-                            <div class="icon-box w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-500 mb-6 relative z-10 shadow-sm border border-sky-100">
+                        <div onclick="switchPracticeMode('listening')" class="game-card bg-white hover:bg-sky-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-sky-400 transition-all duration-300">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-sky-500 rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 transition group-hover:bg-sky-600 group-hover:scale-110"></div>
+                            <div class="icon-box w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-700 mb-6 relative z-10 shadow-sm border border-sky-300 group-hover:bg-sky-200 group-hover:text-sky-800">
                                 <i class="fas fa-headphones-alt text-3xl"></i>
                             </div>
-                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10">Luyện Nghe</h3>
-                            <p class="text-sm text-gray-500 font-medium relative z-10">Nghe phát âm và chọn nghĩa đúng.</p>
+                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10 group-hover:text-sky-900 transition-colors">Luyện Nghe</h3>
+                            <p class="text-sm text-gray-500 font-bold relative z-10 group-hover:text-sky-800">Nghe phát âm và chọn nghĩa đúng.</p>
                         </div>
 
                         <!-- Fill Blank Card -->
-                        <div onclick="switchPracticeMode('fillblank')" class="game-card bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-gray-100">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-fuchsia-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 transition group-hover:bg-fuchsia-200"></div>
-                            <div class="icon-box w-16 h-16 bg-fuchsia-50 rounded-2xl flex items-center justify-center text-fuchsia-500 mb-6 relative z-10 shadow-sm border border-fuchsia-100">
+                        <div onclick="switchPracticeMode('fillblank')" class="game-card bg-white hover:bg-fuchsia-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-fuchsia-400 transition-all duration-300">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500 rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 transition group-hover:bg-fuchsia-600 group-hover:scale-110"></div>
+                            <div class="icon-box w-16 h-16 bg-fuchsia-100 rounded-2xl flex items-center justify-center text-fuchsia-700 mb-6 relative z-10 shadow-sm border border-fuchsia-300 group-hover:bg-fuchsia-200 group-hover:text-fuchsia-800">
                                 <i class="fas fa-pencil-alt text-3xl"></i>
                             </div>
-                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10">Điền Từ</h3>
-                            <p class="text-sm text-gray-500 font-medium relative z-10">Nhập từ vựng còn thiếu vào chỗ trống.</p>
+                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10 group-hover:text-fuchsia-900 transition-colors">Điền Từ</h3>
+                            <p class="text-sm text-gray-500 font-bold relative z-10 group-hover:text-fuchsia-800">Nhập từ vựng còn thiếu vào chỗ trống.</p>
                         </div>
 
                         <!-- Scramble Card -->
-                        <div onclick="switchPracticeMode('scramble')" class="game-card bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-gray-100">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-violet-100 rounded-bl-[4rem] -mr-8 -mt-8 opacity-50 transition group-hover:bg-violet-200"></div>
-                            <div class="icon-box w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-500 mb-6 relative z-10 shadow-sm border border-violet-100">
+                        <div onclick="switchPracticeMode('scramble')" class="game-card bg-white hover:bg-violet-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl group relative overflow-hidden border-2 border-violet-400 transition-all duration-300">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-violet-500 rounded-bl-[4rem] -mr-8 -mt-8 opacity-20 transition group-hover:bg-violet-600 group-hover:scale-110"></div>
+                            <div class="icon-box w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center text-violet-700 mb-6 relative z-10 shadow-sm border border-violet-300 group-hover:bg-violet-200 group-hover:text-violet-800">
                                 <i class="fas fa-sort-alpha-down text-3xl"></i>
                             </div>
-                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10">Sắp Xếp</h3>
-                            <p class="text-sm text-gray-500 font-medium relative z-10">Sắp xếp các ký tự thành từ có nghĩa bằng cách nhấn vào các chữ cái.</p>
+                            <h3 class="text-2xl font-black text-gray-800 mb-2 relative z-10 group-hover:text-violet-900 transition-colors">Sắp Xếp</h3>
+                            <p class="text-sm text-gray-500 font-bold relative z-10 group-hover:text-violet-800">Sắp xếp các ký tự thành từ có nghĩa bằng cách nhấn vào các chữ cái.</p>
                         </div>
                     </div>
 
@@ -515,8 +515,7 @@
             </div>
         </div>
 
-        <footer class="bg-blue-900 text-blue-50 py-6 mt-20 border-t-4 border-yellow-400">
-            <div class="container mx-auto text-center space-y-2">
+        <footer class="bg-blue-900 text-blue-50 py-6 mt-20 border-t-4 border-yellow-400 border-b-4 border-yellow-400">
             <div class="container mx-auto text-center space-y-2">
                 <p class="font-bold uppercase text-sm md:text-base tracking-wider">CoreVocab - Nền tảng số từ vựng Tiếng Anh THPT</p>
                 <p class="text-xs md:text-sm font-medium">Email: anhtuanp384@gmail.com</p>
@@ -574,8 +573,7 @@
             welcome.classList.remove('welcome-hidden');
         }
 
-        // --- VOCABULARY DATA (Abbreviated for code clarity as requested) ---
-        // NOTE: Please replace this structure with the full vocabulary data to restore complete functionality.
+        // --- VOCABULARY DATA ---
         const allVocabData = {
           "10": {
             "unit-1": {
